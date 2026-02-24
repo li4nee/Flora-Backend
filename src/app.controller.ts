@@ -1,12 +1,11 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, All, Req } from '@nestjs/common';
+import type { Request } from 'express';
+import { ResourceNotFoundError } from './shared/typings/error.typings';
 
-@Controller()
+@Controller('api/v1')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @All('*path')
+  handleUnknownRoutes(@Req() req: Request) {
+    throw new ResourceNotFoundError(`Route ${req.method} ${req.url} not found`);
   }
 }
