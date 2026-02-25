@@ -1,39 +1,38 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { AuthRegisterDto } from './dto/registerUser.dto';
+import { AuthLoginDto } from './dto/loginUser.dto';
+import { JwtAuthGuard } from './guards/jwtAuth.guard';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('/test')
-  test() {
-    console.log('Auth controller test endpoint hit');
-    return 'Auth controller is working!';
-  }
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Post('register')
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiBody({ type: AuthRegisterDto })
+  async register(@Body() body: AuthRegisterDto) {
+    const result = await this.authService.register(body);
+    return result;
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @Post('login')
+  @ApiOperation({ summary: 'Login user' })
+  @ApiBody({ type: AuthLoginDto })
+  async login(@Body() body: AuthLoginDto) {
+    const result = await this.authService.login(body);
+    return result;
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.authService.findOne(+id);
-  // }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @Get('/protected')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Access protected resource' })
+  @UseGuards(JwtAuthGuard)
+  getProtectedResource() {
+    return {
+      message: 'This is a protected resource',
+    };
   }
 }
