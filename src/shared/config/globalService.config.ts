@@ -36,7 +36,7 @@ export class GlobalConfigService {
   get jwt() {
     return {
       secret: this.env.JWT_SECRET,
-      expiresIn: this.env.JWT_EXPIRES_IN,
+      expiresIn: String(this.env.JWT_EXPIRES_IN),
     };
   }
 }

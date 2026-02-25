@@ -1,26 +1,90 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+
+import { User } from '../user/entities/user.entity';
+import { AuthRegisterDto } from './dto/registerUser.dto';
+import { AuthLoginDto } from './dto/loginUser.dto';
+import { Profile } from '../user/entities/profile.entity';
+import { InvalidInputError, PermissionNotGrantedError } from 'src/shared/typings/error.typings';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async register(body: AuthRegisterDto) {
+    const { email, password, profile } = body;
+
+    const existingUser = await this.userRepo.findOne({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new InvalidInputError('Email already registered');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User();
+    const newProfile = new Profile();
+    user.email = email;
+    user.password = hashedPassword;
+    newProfile.firstName = profile.firstName;
+    newProfile.lastName = profile.lastName;
+    newProfile.dateOfBirth = profile?.dateOfBirth ? new Date(profile.dateOfBirth) : null;
+    user.profile = newProfile;
+
+    await this.userRepo.save(user);
+
+    const token = this.jwtService.sign({
+      sub: user.id,
+    });
+
+    return {
+      message: 'User registered successfully',
+      data: {
+        accessToken: token,
+      },
+    };
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  async login(body: AuthLoginDto) {
+    const { email, password } = body;
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+    const user = await this.userRepo.findOne({
+      where: { email },
+      select: ['id', 'email', 'password'],
+    });
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+    if (!user) {
+      throw new InvalidInputError('Invalid credentials');
+    }
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      throw new PermissionNotGrantedError('Invalid credentials');
+    }
+
+    const token = this.jwtService.sign({
+      sub: user.id,
+    });
+
+    return {
+      message: 'Login successful',
+      data: {
+        accessToken: token,
+        user: {
+          id: user.id,
+          email: user.email,
+        },
+      },
+    };
   }
 }

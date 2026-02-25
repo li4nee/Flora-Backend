@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './shared/filters/globalException.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ResponseInterceptor } from './shared/interceptor/response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -28,7 +29,6 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalFilters(new GlobalExceptionFilter(logger));
   app.setGlobalPrefix('/api/v1');
   if (config.app.nodeEnv !== 'production') {
     const swaggerConfig = new DocumentBuilder()
@@ -41,7 +41,10 @@ async function bootstrap() {
     SwaggerModule.setup('/docs', app, document);
     logger.info('Swagger docs available at /docs');
   }
+  app.useGlobalFilters(new GlobalExceptionFilter(logger));
+  app.useGlobalInterceptors(new ResponseInterceptor());
   app.enableShutdownHooks();
+
   await app.listen(config.app.port);
 }
 
