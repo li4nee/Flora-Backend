@@ -1,6 +1,7 @@
 import { GlobalEntity } from 'src/shared/db/globalEntity';
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { Profile } from './profile.entity';
+import { Notification } from 'src/module/notifications/entities/notifications.entity';
 
 /**
  * @extends GlobalEntity
@@ -9,6 +10,7 @@ import { Profile } from './profile.entity';
  * @property {password} - The password of the user.
  * @property {isEmailVerified} - Indicates whether the user's email is verified.
  * @property {isBlocked} - Indicates whether the user is blocked.
+ * @property {notification} - A one-to-one relationship with the Notification entity, representing the user's notification settings.
  * @relation {profile} - A one-to-one relationship with the Profile entity, representing the user's profile information.
  */
 @Entity()
@@ -32,4 +34,8 @@ export class User extends GlobalEntity {
   @OneToOne(() => Profile, (profile) => profile.user, { cascade: true })
   @JoinColumn()
   profile?: Profile;
+
+  @OneToOne(() => Notification, (notification) => notification.user)
+  @JoinColumn()
+  notification!: Notification;
 }
