@@ -1,46 +1,31 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-
-import { User } from '../user/entities/user.entity';
 import { AuthRegisterDto } from './dto/registerUser.dto';
 import { AuthLoginDto } from './dto/loginUser.dto';
-import { Profile } from '../user/entities/profile.entity';
 import { InvalidInputError, PermissionNotGrantedError } from 'src/shared/typings/error.typings';
+import { UserService } from '../user/user.service';
+import { PasswordUtils } from 'src/shared/utils/password.utils';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
+    private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly passwordUtils: PasswordUtils,
   ) {}
 
   async register(body: AuthRegisterDto) {
     const { email, password, profile } = body;
 
-    const existingUser = await this.userRepo.findOne({
-      where: { email },
-    });
+    const existingUser = await this.userService.userExistsByEmail(email);
 
     if (existingUser) {
       throw new InvalidInputError('Email already registered');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await this.passwordUtils.hashPassword(password);
 
-    const user = new User();
-    const newProfile = new Profile();
-    user.email = email;
-    user.password = hashedPassword;
-    newProfile.firstName = profile.firstName;
-    newProfile.lastName = profile.lastName;
-    newProfile.dateOfBirth = profile?.dateOfBirth ? new Date(profile.dateOfBirth) : null;
-    user.profile = newProfile;
-
-    await this.userRepo.save(user);
+    const user = await this.userService.create(email, hashedPassword, profile);
 
     const token = this.jwtService.sign({
       sub: user.id,
@@ -55,18 +40,13 @@ export class AuthService {
   }
 
   async login(body: AuthLoginDto) {
-    const { email, password } = body;
-
-    const user = await this.userRepo.findOne({
-      where: { email },
-      select: ['id', 'email', 'password'],
-    });
+    const user = await this.userService.findByEmail(body.email);
 
     if (!user) {
       throw new InvalidInputError('Invalid credentials');
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await this.passwordUtils.comparePassword(body.password, user.password);
 
     if (!isMatch) {
       throw new PermissionNotGrantedError('Invalid credentials');

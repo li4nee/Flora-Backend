@@ -35,7 +35,7 @@ export class User extends GlobalEntity {
   @JoinColumn()
   profile?: Profile;
 
-  @OneToOne(() => Notification, (notification) => notification.user)
+  @OneToOne(() => Notification, (notification) => notification.user, { cascade: true })
   @JoinColumn()
   notification!: Notification;
 }

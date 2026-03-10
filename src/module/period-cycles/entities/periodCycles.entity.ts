@@ -29,4 +29,7 @@ export class PeriodCycles extends GlobalEntity {
 
   @Column({ nullable: true })
   cycleLength?: number;
+
+  @Column({ type: 'text', nullable: true })
+  notes?: string;
 }

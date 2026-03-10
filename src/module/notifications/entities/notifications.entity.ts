@@ -26,7 +26,7 @@ export class Notification extends GlobalEntity {
   fertilityNotification!: boolean;
 
   @Column({ type: 'time', nullable: true })
-  reminderTime!: string | null;
+  reminderTimeInUTC!: string | null;
 
   @Column({ default: false })
   dailyLogNotification!: boolean;
