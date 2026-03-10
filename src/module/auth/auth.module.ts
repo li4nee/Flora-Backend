@@ -7,9 +7,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { GlobalConfigService } from 'src/shared/config/globalService.config';
 import { JwtStrategy } from './strategies/jwt.strategies';
 import { AuthController } from './auth.controller';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
+    UserModule,
     TypeOrmModule.forFeature([User]),
     PassportModule,
     JwtModule.registerAsync({
