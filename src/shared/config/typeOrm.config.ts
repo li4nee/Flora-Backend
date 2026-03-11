@@ -1,6 +1,6 @@
 import { TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
-import { GlobalConfigService } from './globalService.config';
+import { GlobalConfigService } from './global.config';
 import { LoggerService } from './loggerService.config';
 
 @Injectable()
