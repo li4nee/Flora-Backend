@@ -4,11 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../user/entities/user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-import { GlobalConfigService } from 'src/shared/config/globalService.config';
+import { GlobalConfigService } from 'src/shared/config/global.config';
 import { JwtStrategy } from './strategies/jwt.strategies';
 import { AuthController } from './auth.controller';
 import { UserModule } from '../user/user.module';
-
+import { StringValue } from 'ms';
 @Module({
   imports: [
     UserModule,
@@ -19,7 +19,8 @@ import { UserModule } from '../user/user.module';
       useFactory: (config: GlobalConfigService) => ({
         secret: config.jwt.secret,
         signOptions: {
-          expiresIn: parseInt(config.jwt.expiresIn, 10),
+          // expiresIn: config.jwt.expiresIn as StringValue,
+          expiresIn: '7d',
         },
       }),
     }),

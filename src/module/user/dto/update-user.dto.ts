@@ -1,10 +1,10 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * DTO to update user email
  */
-export class UpdateEmailDto {
+export class UserUpdateEmailDto {
   @ApiProperty({
     example: 'newemail@example.com',
     description: 'New email address the user wants to update to',
@@ -13,7 +13,7 @@ export class UpdateEmailDto {
   newEmail!: string;
 
   @ApiProperty({
-    example: 'currentPassword123',
+    example: '1234567890drake',
     description: 'User current password for verification',
   })
   @IsString()
@@ -23,21 +23,26 @@ export class UpdateEmailDto {
 /**
  * DTO to update user password
  */
-export class UpdatePasswordDto {
+export class UserUpdatePasswordDto {
   @ApiProperty({
-    example: 'oldPassword123',
+    example: '1234567890drake',
     description: 'User current password',
   })
   @IsString()
   currentPassword!: string;
 
   @ApiProperty({
-    example: 'newSecurePassword123',
-    description: 'New password with minimum 8 characters',
+    example: '1234567890Drake@',
+    description:
+      'New password with minimum 8 characters, at least one uppercase letter, one lowercase letter, one number, and one special character',
     minLength: 8,
   })
   @IsString()
   @MinLength(8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)',
+  })
   newPassword!: string;
 }
 

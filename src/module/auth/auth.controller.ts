@@ -26,7 +26,7 @@ export class AuthController {
     return result;
   }
 
-  @Get('/protected')
+  @Get('/protected-test-garna')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Access protected resource' })
   @UseGuards(JwtAuthGuard)

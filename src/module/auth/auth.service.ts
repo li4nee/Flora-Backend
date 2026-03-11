@@ -40,7 +40,7 @@ export class AuthService {
   }
 
   async login(body: AuthLoginDto) {
-    const user = await this.userService.findByEmail(body.email);
+    const user = await this.userService.getUserPasswordByEmail(body.email);
 
     if (!user) {
       throw new InvalidInputError('Invalid credentials');
@@ -62,7 +62,6 @@ export class AuthService {
         accessToken: token,
         user: {
           id: user.id,
-          email: user.email,
         },
       },
     };
