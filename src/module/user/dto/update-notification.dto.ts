@@ -1,14 +1,27 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString, Matches } from 'class-validator';
 
-export class UpdateNotificationDto {
+export class UserUpdateNotificationDto {
+  @ApiProperty({
+    example: true,
+    description: 'Whether to receive period notifications',
+  })
   @IsOptional()
   @IsBoolean()
   periodNotification?: boolean;
 
+  @ApiProperty({
+    example: true,
+    description: 'Whether to receive fertility notifications',
+  })
   @IsOptional()
   @IsBoolean()
   fertilityNotification?: boolean;
 
+  @ApiProperty({
+    example: true,
+    description: 'Whether to receive daily log reminders',
+  })
   @IsOptional()
   @IsBoolean()
   dailyLogNotification?: boolean;
@@ -17,6 +30,11 @@ export class UpdateNotificationDto {
    * Time string in HH:MM format (24h) in UTC, e.g. "08:00", "20:30".
    * Set to null to clear the reminder time.
    */
+  @ApiProperty({
+    example: '08:00',
+    description: 'Daily log reminder time in HH:MM format in UTC (e.g. "08:00"). Set to null to clear the reminder time.',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
   @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
