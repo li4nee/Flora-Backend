@@ -9,9 +9,9 @@ export const CurrentUserId = createParamDecorator((_: unknown, ctx: ExecutionCon
   const request = ctx.switchToHttp().getRequest<AuthorizedRequest>();
   const userId = request.user?.userId;
 
-  console.log('Extracted userId from request:', userId); // Debug log to verify extraction
+  console.log('Extracted userId from request:', userId);
   if (!userId) {
-    throw new PermissionNotGrantedError('User ID not found in request'); // You can throw your custom PermissionNotGrantedError
+    throw new PermissionNotGrantedError('User ID not found in request');
   }
 
   return userId;

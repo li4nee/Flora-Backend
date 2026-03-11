@@ -43,7 +43,7 @@ export class UserController {
   @ApiBearerAuth()
   async updateProfile(@CurrentUserId() userId: string, @Body() dto: UserUpdateProfileDto) {
     const profile = await this.userService.updateProfile(userId, dto);
-    return { message: 'Profile updated successfully', profile };
+    return { message: 'Profile updated successfully', user: profile };
   }
 
   @Put('me/notifications')
@@ -52,6 +52,6 @@ export class UserController {
   @ApiBearerAuth()
   async updateNotifications(@CurrentUserId() userId: string, @Body() dto: UserUpdateNotificationDto) {
     const notification = await this.userService.updateNotifications(userId, dto);
-    return { message: 'Notification settings updated successfully', notification };
+    return { message: 'Notification settings updated successfully', user: notification };
   }
 }
