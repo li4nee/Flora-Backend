@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { GlobalConfigService } from './shared/config/globalService.config';
+import { GlobalConfigService } from './shared/config/global.config';
 import { LoggerService } from './shared/config/loggerService.config';
 import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
@@ -57,3 +57,9 @@ bootstrap()
     console.error('Failed to start application', err);
     process.exit(1);
   });
+
+// Things left to do in here :
+// Add Rate limiting
+// Add graceful shutdown hooks for cleanup on app termination
+// Add CORS configuration
+// Add endpoints for health checks and metrics

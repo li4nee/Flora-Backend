@@ -6,4 +6,4 @@ import { DailyLogsAndSymptomsController } from './daily-logs-symptoms.controller
   controllers: [DailyLogsAndSymptomsController],
   providers: [DailyLogsAndSymptomsService],
 })
-export class DailySymptomsModule {}
+export class DailyLogsAndSymptomsModule {}

@@ -4,12 +4,12 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { Profile } from './entities/profile.entity';
 import { AuthRegisterProfileDto } from '../auth/dto/registerProfile.dto';
-import { UpdateEmailDto, UpdatePasswordDto } from './dto/update-user.dto';
+import { UserUpdateEmailDto, UserUpdatePasswordDto } from './dto/update-user.dto';
 import { InvalidInputError } from 'src/shared/typings/error.typings';
 import { PasswordUtils } from 'src/shared/utils/password.utils';
-import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserUpdateProfileDto } from './dto/update-profile.dto';
 import { Notification } from '../notifications/entities/notifications.entity';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
+import { UserUpdateNotificationDto } from './dto/update-notification.dto';
 
 @Injectable()
 export class UserService {
@@ -46,8 +46,26 @@ export class UserService {
     return !!result;
   }
 
-  private async getUserPasswordById(id: string): Promise<User | null> {
-    return this.userRepo.createQueryBuilder('user').select(['user.id,user.password']).where('user.id = :id', { id }).getOne();
+  private async getUserPasswordBase(where: { id?: string; email?: string }): Promise<User | null> {
+    const qb = this.userRepo.createQueryBuilder('user').select(['user.id', 'user.password']);
+
+    if (where.id) {
+      qb.where('user.id = :id', { id: where.id });
+    }
+
+    if (where.email) {
+      qb.where('user.email = :email', { email: where.email });
+    }
+
+    return qb.getOne();
+  }
+
+  async getUserPasswordById(id: string): Promise<User | null> {
+    return this.getUserPasswordBase({ id });
+  }
+
+  async getUserPasswordByEmail(email: string): Promise<User | null> {
+    return this.getUserPasswordBase({ email });
   }
 
   async userExistsByEmail(email: string): Promise<boolean> {
@@ -101,7 +119,7 @@ export class UserService {
     return this.userRepo.save(user);
   }
 
-  async updateEmail(userId: string, dto: UpdateEmailDto): Promise<User> {
+  async updateEmail(userId: string, dto: UserUpdateEmailDto): Promise<User> {
     const user = await this.getUserPasswordById(userId);
     if (!user) throw new InvalidInputError('User not found');
 
@@ -116,7 +134,7 @@ export class UserService {
     return this.userRepo.save(user);
   }
 
-  async updatePassword(userId: string, dto: UpdatePasswordDto): Promise<User> {
+  async updatePassword(userId: string, dto: UserUpdatePasswordDto): Promise<User> {
     const user = await this.getUserPasswordById(userId);
 
     if (!user) throw new InvalidInputError('User not found');
@@ -128,7 +146,7 @@ export class UserService {
     return this.userRepo.save(user);
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<User> {
+  async updateProfile(userId: string, dto: UserUpdateProfileDto): Promise<User> {
     const user = await this.findByIdAndRelationWithProfile(userId);
 
     if (!user) throw new InvalidInputError('User not found');
@@ -143,7 +161,7 @@ export class UserService {
     return this.userRepo.save(user);
   }
 
-  async updateNotifications(userId: string, dto: UpdateNotificationDto): Promise<User> {
+  async updateNotifications(userId: string, dto: UserUpdateNotificationDto): Promise<User> {
     const user = await this.findByIdAndRelationWithNotification(userId);
 
     if (!user) throw new InvalidInputError('User not found');

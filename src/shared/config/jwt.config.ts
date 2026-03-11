@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
-import { GlobalConfigService } from './globalService.config';
+import { GlobalConfigService } from './global.config';
 import { InvalidInputError } from '../typings/error.typings';
 import { LoggerService } from './loggerService.config';
 
