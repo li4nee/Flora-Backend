@@ -9,7 +9,7 @@ export class AuthRegisterDto {
   email!: string;
 
   @ApiProperty({
-    example: 'Drake@1234567890',
+    example: '1234567890Drake@',
     description: 'Password (min 8 characters, must include uppercase, lowercase, number, and special character)',
   })
   @IsString()
