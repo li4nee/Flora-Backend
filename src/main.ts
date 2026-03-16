@@ -7,7 +7,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './shared/filters/globalException.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from './shared/interceptor/response.interceptor';
-
+import type { Request, Response } from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

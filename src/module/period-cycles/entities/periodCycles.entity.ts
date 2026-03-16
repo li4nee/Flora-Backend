@@ -1,6 +1,6 @@
 import { User } from 'src/module/user/entities/user.entity';
 import { GlobalEntity } from 'src/shared/db/globalEntity';
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 
 /**
  * @extends GlobalEntity
@@ -12,8 +12,11 @@ import { Column, Entity, Index, ManyToOne } from 'typeorm';
  * @property {cycleLength} - The length of the period cycle in days.
  */
 @Entity()
+@Index(['user', 'startDate'])
 export class PeriodCycles extends GlobalEntity {
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, {
+    onDelete: 'CASCADE',
+  })
   user!: User;
 
   @Column({ type: 'date', nullable: false })
@@ -30,6 +33,6 @@ export class PeriodCycles extends GlobalEntity {
   @Column({ nullable: true })
   cycleLength?: number;
 
-  @Column({ type: 'text', nullable: true })
-  notes?: string;
+  @Column('text', { array: true, nullable: true })
+  notes?: string[];
 }
