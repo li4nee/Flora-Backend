@@ -1,7 +1,7 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { LoggerService } from '../config/loggerService.config';
-import { CustomError } from '../typings/error.typings';
+import { CustomError, ErrorMessage } from '../typings/error.typings';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -25,12 +25,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const res = exception.getResponse();
       if (typeof res === 'object' && res !== null) {
         const resObj = res as Record<string, unknown>;
-        if (typeof resObj.message === 'string') {
+        if (Array.isArray(resObj.message)) {
+          message = resObj.message.join(', ');
+        } else if (typeof resObj.message === 'string') {
           message = resObj.message;
         }
-        if (typeof resObj.errorCode === 'string') {
-          errorCode = resObj.errorCode;
-        }
+        errorCode = ErrorMessage.INVALID_INPUT;
       }
     } else if (exception instanceof Error) {
       message = exception.message;

@@ -8,8 +8,6 @@ import { AuthorizedRequest } from '../typings/auth.typings';
 export const CurrentUserId = createParamDecorator((_: unknown, ctx: ExecutionContext): string => {
   const request = ctx.switchToHttp().getRequest<AuthorizedRequest>();
   const userId = request.user?.userId;
-
-  console.log('Extracted userId from request:', userId);
   if (!userId) {
     throw new PermissionNotGrantedError('User ID not found in request');
   }
