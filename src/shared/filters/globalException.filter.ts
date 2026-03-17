@@ -1,7 +1,7 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { LoggerService } from '../config/loggerService.config';
-import { CustomError, ErrorMessage } from '../typings/error.typings';
+import { CustomError, ErrorHttpStatusCode, ErrorMessage } from '../typings/error.typings';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -30,7 +30,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         } else if (typeof resObj.message === 'string') {
           message = resObj.message;
         }
-        errorCode = ErrorMessage.INVALID_INPUT;
+        errorCode = this.findTheErrorMessageForUnknownException(exception);
       }
     } else if (exception instanceof Error) {
       message = exception.message;
@@ -45,5 +45,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
     });
+  }
+
+  private findTheErrorMessageForUnknownException(exception: unknown): string {
+    const statusCode = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    const statusCodeToErrorMessage: Record<number, ErrorMessage> = {
+      [ErrorHttpStatusCode.INVALID_INPUT]: ErrorMessage.INVALID_INPUT,
+      [ErrorHttpStatusCode.PERMISSION_NOT_GRANTED]: ErrorMessage.PERMISSION_NOT_GRANTED,
+      [ErrorHttpStatusCode.RESOURCE_NOT_FOUND]: ErrorMessage.RESOURCE_NOT_FOUND,
+      [ErrorHttpStatusCode.INTERNAL_SERVER_ERROR]: ErrorMessage.INTERNAL_SERVER_ERROR,
+      [ErrorHttpStatusCode.RATE_LIMIT_EXCEEDED]: ErrorMessage.RATE_LIMIT_EXCEEDED,
+      [ErrorHttpStatusCode.UNAUTHORIZED]: ErrorMessage.UNAUTHORIZED,
+    };
+
+    return statusCodeToErrorMessage[statusCode] || ErrorMessage.INTERNAL_SERVER_ERROR;
   }
 }

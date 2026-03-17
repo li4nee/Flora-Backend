@@ -6,6 +6,7 @@ export enum ErrorMessage {
   RESOURCE_NOT_FOUND = 'RESOURCE_NOT_FOUND',
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
+  UNAUTHORIZED = 'UNAUTHORIZED',
 }
 
 export enum ErrorHttpStatusCode {
@@ -14,6 +15,7 @@ export enum ErrorHttpStatusCode {
   RESOURCE_NOT_FOUND = 404,
   INTERNAL_SERVER_ERROR = 500,
   RATE_LIMIT_EXCEEDED = 429,
+  UNAUTHORIZED = 401,
 }
 
 export abstract class CustomError extends HttpException {
@@ -36,6 +38,12 @@ export class InvalidInputError extends CustomError {
 export class PermissionNotGrantedError extends CustomError {
   constructor(message = 'Permission not granted') {
     super(message, ErrorHttpStatusCode.PERMISSION_NOT_GRANTED, ErrorMessage.PERMISSION_NOT_GRANTED);
+  }
+}
+
+export class UnauthorizedError extends CustomError {
+  constructor(message = 'Unauthorized') {
+    super(message, ErrorHttpStatusCode.UNAUTHORIZED, ErrorMessage.UNAUTHORIZED);
   }
 }
 

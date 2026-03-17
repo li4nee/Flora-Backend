@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { PermissionNotGrantedError } from '../typings/error.typings';
+import { UnauthorizedError } from '../typings/error.typings';
 import { AuthorizedRequest } from '../typings/auth.typings';
 
 /**
@@ -9,8 +9,7 @@ export const CurrentUserId = createParamDecorator((_: unknown, ctx: ExecutionCon
   const request = ctx.switchToHttp().getRequest<AuthorizedRequest>();
   const userId = request.user?.userId;
   if (!userId) {
-    throw new PermissionNotGrantedError('User ID not found in request');
+    throw new UnauthorizedError('User ID not found in request');
   }
-
   return userId;
 });

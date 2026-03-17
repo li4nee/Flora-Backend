@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { PeriodCyclesService } from './period-cycles.service';
 import { JwtAuthGuard } from '../auth/guards/jwtAuth.guard';
 import { CurrentUserId } from 'src/shared/decorators/currentUserId.decorators';
@@ -12,21 +12,24 @@ import { InvalidInputError } from 'src/shared/typings/error.typings';
 export class PeriodCyclesController {
   constructor(private readonly periodCyclesService: PeriodCyclesService) {}
 
-  @Post('start')
-  @ApiOperation({ summary: 'Log the start of a new period cycle' })
+  @Post('/period/start')
+  @ApiOperation({ summary: "Log in the period's start" })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   async logStart(@CurrentUserId() userId: string, @Body() dto: PeriodCycleStartLogDto) {
     const result = await this.periodCyclesService.logPeriodStart(userId, dto);
-    return { message: 'Period cycle start logged successfully', data: result };
+    return { message: "Period's start logged successfully", data: result };
   }
 
-  @Patch(':id/end')
-  @ApiOperation({ summary: 'Log the end of the period cycle' })
+  @Patch('/period/:id/end')
+  @ApiOperation({ summary: 'Log the end of the period' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  async logEnd(@CurrentUserId() userId: string, @Param('id') id: string, @Body() dto: PeriodCycleEndLogDto) {
+  async logEnd(@CurrentUserId() userId: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: PeriodCycleEndLogDto) {
     const { periodEndDate, notes } = dto;
+    if (!id) {
+      throw new InvalidInputError('Period cycle ID is required to log the end of the cycle.');
+    }
     const result = await this.periodCyclesService.logPeriodEnd(userId, id, periodEndDate, notes);
     return { message: 'Period cycle end logged successfully', data: result };
   }
@@ -45,7 +48,7 @@ export class PeriodCyclesController {
   @ApiOperation({ summary: 'Get the details of a specific period cycle.' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  async getCycle(@CurrentUserId() userId: string, @Param('id') id: string) {
+  async getCycle(@CurrentUserId() userId: string, @Param('id', ParseUUIDPipe) id: string) {
     if (!id) {
       throw new InvalidInputError('Period cycle ID is required to retrieve details.');
     }
@@ -60,7 +63,7 @@ export class PeriodCyclesController {
   @ApiOperation({ summary: 'Delete the history of the period cycle.' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  async delete(@CurrentUserId() userId: string, @Param('id') id: string) {
+  async delete(@CurrentUserId() userId: string, @Param('id', ParseUUIDPipe) id: string) {
     if (!id) {
       throw new InvalidInputError('Period cycle ID is required to delete the cycle.');
     }
