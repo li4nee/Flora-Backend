@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PeriodCycles } from './entities/periodCycles.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { InvalidInputError } from 'src/shared/typings/error.typings';
 import { PeriodCycleHistoryGetDto } from './dto/periodCycleHistoryGet.dto';
 import { PeriodCycleStartLogDto } from './dto/periodCycleStart.dto';
@@ -9,6 +9,7 @@ import { parseISO } from 'date-fns/parseISO';
 import { differenceInDays } from 'date-fns/differenceInDays';
 import { addYears } from 'date-fns/addYears';
 import { User } from '../user/entities/user.entity';
+import { endOfDay, startOfDay } from 'date-fns';
 @Injectable()
 export class PeriodCyclesService {
   constructor(
@@ -31,6 +32,7 @@ export class PeriodCyclesService {
       if (cycleLength == null || cycleLength <= 0) {
         throw new InvalidInputError('The new period start date must be after the previous cycle start date.');
       }
+      await this.updateTheEndDateOfCycle(previous, dto.periodStartDate);
     }
     return this.createCycle(userId, dto.periodStartDate, cycleLength ?? undefined, dto.notes);
   }
@@ -66,7 +68,7 @@ export class PeriodCyclesService {
 
     const qb = this.periodCyclesRepo
       .createQueryBuilder('cycle')
-      .select(['cycle.id', 'cycle.startDate', 'cycle.endDate'])
+      .select(['cycle.id', 'cycle.startDate', 'cycle.endDate', 'cycle.cycleLength', 'cycle.periodLength'])
       .where('cycle.userId = :userId', { userId });
 
     if (dto.startDateFrom) {
@@ -80,10 +82,6 @@ export class PeriodCyclesService {
         startDateTo: dto.startDateTo,
       });
     }
-
-    if (dto.cycleLengthMax !== undefined || dto.cycleLengthMin !== undefined) {
-      qb.addSelect('cycle.cycleLength');
-    }
     if (dto.cycleLengthMin !== undefined) {
       qb.andWhere('cycle.cycleLength >= :cycleLengthMin', {
         cycleLengthMin: dto.cycleLengthMin,
@@ -96,9 +94,6 @@ export class PeriodCyclesService {
       });
     }
 
-    if (dto.periodLengthMax !== undefined || dto.periodLengthMin !== undefined) {
-      qb.addSelect('cycle.periodLength');
-    }
     if (dto.periodLengthMin !== undefined) {
       qb.andWhere('cycle.periodLength >= :periodLengthMin', {
         periodLengthMin: dto.periodLengthMin,
@@ -118,7 +113,7 @@ export class PeriodCyclesService {
       });
     }
 
-    qb.orderBy('cycle.startDate', 'DESC')
+    qb.orderBy('cycle.startDate', dto.order)
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -141,10 +136,6 @@ export class PeriodCyclesService {
       throw new InvalidInputError('No period cycle found with the given ID for this user.');
     }
 
-    // if (cycle.endDate) {
-    //   throw new InvalidInputError('This period cycle already has an end date logged.');
-    // }
-
     const endDate = parseISO(endDateStr);
     const startDate = parseISO(cycle.startDate);
 
@@ -153,8 +144,6 @@ export class PeriodCyclesService {
     }
 
     const periodLength = differenceInDays(endDate, startDate) + 1; // +1 to include the start date
-
-    cycle.endDate = endDateStr;
     cycle.periodLength = periodLength;
     if (notes) {
       if (Array.isArray(cycle.notes) && cycle.notes.length > 0) {
@@ -184,6 +173,32 @@ export class PeriodCyclesService {
       throw new InvalidInputError('No period cycle found with the given ID for this user.');
     }
   }
+
+  async findActiveCycleForUserOnDate(userId: string, dateStr: string, cycleId?: string): Promise<PeriodCycles | null> {
+    const date = parseISO(dateStr);
+    const start = startOfDay(date);
+    const end = endOfDay(date);
+
+    const qb = this.periodCyclesRepo
+      .createQueryBuilder('cycle')
+      .where('cycle.userId = :userId', { userId })
+      .andWhere('cycle.startDate <= :end', { end }) // cycle should start before or on this date
+      .andWhere(
+        new Brackets(
+          (qb) =>
+            qb
+              .where('cycle.endDate IS NULL') // ongoing cycles
+              .orWhere('cycle.endDate >= :start', { start }), // ended after this date
+        ),
+      );
+
+    if (cycleId) {
+      qb.andWhere('cycle.id = :cycleId', { cycleId });
+    }
+
+    return qb.getOne();
+  }
+
   private async createCycle(userId: string, startDate: string, cycleLength?: number, notes?: string): Promise<PeriodCycles> {
     const periodCycle = new PeriodCycles();
     periodCycle.user = { id: userId } as User;
@@ -195,5 +210,11 @@ export class PeriodCyclesService {
       periodCycle.notes = [notes];
     }
     return this.periodCyclesRepo.save(periodCycle);
+  }
+
+  private async updateTheEndDateOfCycle(cycle: PeriodCycles, endDate: string): Promise<PeriodCycles> {
+    cycle.endDate = new Date(parseISO(endDate).getTime() - 24 * 60 * 60 * 1000).toISOString();
+    cycle.cycleLength = differenceInDays(parseISO(endDate), parseISO(cycle.startDate)) + 1;
+    return this.periodCyclesRepo.save(cycle);
   }
 }

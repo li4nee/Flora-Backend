@@ -32,10 +32,12 @@ export enum CervicalMucusType {
 
 @Entity()
 export class DailyLog extends GlobalEntity {
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, {
+    onDelete: 'CASCADE',
+  })
   user!: User;
 
-  @Index({ unique: true })
+  @Index()
   @Column({ type: 'date' })
   logDate!: string;
 

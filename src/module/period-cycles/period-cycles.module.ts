@@ -8,5 +8,6 @@ import { PeriodCycles } from './entities/periodCycles.entity';
   imports: [TypeOrmModule.forFeature([PeriodCycles])],
   controllers: [PeriodCyclesController],
   providers: [PeriodCyclesService],
+  exports: [PeriodCyclesService],
 })
 export class PeriodCyclesModule {}

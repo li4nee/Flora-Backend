@@ -44,7 +44,9 @@ export enum SymptomType {
  */
 @Entity()
 export class DailySymptom extends GlobalEntity {
-  @ManyToOne(() => DailyLog, (dailyLog) => dailyLog.dailySymptoms)
+  @ManyToOne(() => DailyLog, (dailyLog) => dailyLog.dailySymptoms, {
+    onDelete: 'CASCADE',
+  })
   dailyLog!: DailyLog;
 
   @Column({

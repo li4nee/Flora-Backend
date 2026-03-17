@@ -16,3 +16,8 @@ export enum SEVERITY {
   SEVERE = 4,
   VERY_SEVERE = 5,
 }
+
+export enum SortOrder {
+  ASC = 'ASC',
+  DESC = 'DESC',
+}
