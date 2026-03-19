@@ -37,6 +37,8 @@ export class GlobalConfigService {
     return {
       secret: this.env.JWT_SECRET,
       expiresIn: String(this.env.JWT_EXPIRES_IN),
+      refreshTokenExpiresIn: String(this.env.JWT_REFRESH_EXPIRES_IN),
+      refreshTokenSecret: this.env.JWT_REFRESH_SECRET,
     };
   }
 }

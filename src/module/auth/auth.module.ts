@@ -8,11 +8,12 @@ import { GlobalConfigService } from 'src/shared/config/global.config';
 import { JwtStrategy } from './strategies/jwt.strategies';
 import { AuthController } from './auth.controller';
 import { UserModule } from '../user/user.module';
-import { StringValue } from 'ms';
+import { RefreshToken } from './entities/refreshToken.entity';
+import { ScheduleModule } from '@nestjs/schedule';
 @Module({
   imports: [
     UserModule,
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, RefreshToken]),
     PassportModule,
     JwtModule.registerAsync({
       inject: [GlobalConfigService],
@@ -24,6 +25,7 @@ import { StringValue } from 'ms';
         },
       }),
     }),
+    ScheduleModule.forRoot(),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
