@@ -214,7 +214,7 @@ export class PeriodCyclesService {
 
   private async updateTheEndDateOfCycle(cycle: PeriodCycles, endDate: string): Promise<PeriodCycles> {
     cycle.endDate = new Date(parseISO(endDate).getTime() - 24 * 60 * 60 * 1000).toISOString();
-    cycle.cycleLength = differenceInDays(parseISO(endDate), parseISO(cycle.startDate)) + 1;
+    cycle.cycleLength = differenceInDays(parseISO(endDate), parseISO(cycle.startDate));
     return this.periodCyclesRepo.save(cycle);
   }
 }

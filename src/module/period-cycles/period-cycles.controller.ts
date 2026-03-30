@@ -2,12 +2,13 @@ import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query
 import { PeriodCyclesService } from './period-cycles.service';
 import { JwtAuthGuard } from '../auth/guards/jwtAuth.guard';
 import { CurrentUserId } from 'src/shared/decorators/currentUserId.decorators';
-import { ApiBearerAuth, ApiExtraModels, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PeriodCycleStartLogDto } from './dto/periodCycleStart.dto';
 import { PeriodCycleEndLogDto } from './dto/periodCycleEnd.dto';
 import { PeriodCycleHistoryGetDto } from './dto/periodCycleHistoryGet.dto';
 import { InvalidInputError } from 'src/shared/typings/error.typings';
 
+@ApiTags('Period Cycles')
 @Controller('period-cycles')
 export class PeriodCyclesController {
   constructor(private readonly periodCyclesService: PeriodCyclesService) {}
