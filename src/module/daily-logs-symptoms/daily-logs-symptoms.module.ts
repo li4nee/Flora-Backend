@@ -10,5 +10,6 @@ import { PeriodCyclesModule } from '../period-cycles/period-cycles.module';
   imports: [TypeOrmModule.forFeature([DailyLog, DailySymptom]), PeriodCyclesModule],
   controllers: [DailyLogsAndSymptomsController],
   providers: [DailyLogsAndSymptomsService],
+  exports: [DailyLogsAndSymptomsService],
 })
 export class DailyLogsAndSymptomsModule {}
