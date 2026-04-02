@@ -25,6 +25,8 @@ export interface DailyLogInsights {
   // BBT shift detection: did temp rise (post-ovulation sign)?
   bbtShiftDetected: boolean;
   bbtShiftDate: Date | null;
+  /** Top symptoms logged in this cycle, sorted by frequency */
+  topSymptoms: { symptomType: string; count: number; avgSeverity: number }[];
 }
 @Injectable()
 export class DailyLogsAndSymptomsService {
@@ -293,7 +295,15 @@ export class DailyLogsAndSymptomsService {
     const from = format(cycleStartDate, 'yyyy-MM-dd');
     const to = format(subDays(new Date(), 0), 'yyyy-MM-dd');
 
-    const logs = await this.getRange(userId, from, to);
+    // Use query builder to load dailySymptoms relation
+    const logs = await this.dailyLogRepo.find({
+      where: {
+        user: { id: userId },
+        logDate: Between(from, to),
+      },
+      relations: { dailySymptoms: true }, // Ensure symptoms are loaded
+      order: { logDate: 'ASC' },
+    });
 
     if (logs.length === 0) {
       return this.emptyInsights();
@@ -314,6 +324,29 @@ export class DailyLogsAndSymptomsService {
     const contraceptiveConsistency =
       contraceptiveLogs.length > 0 ? contraceptiveLogs.filter((l) => l.tookContraceptive).length / contraceptiveLogs.length : 0;
 
+    // Aggregate symptoms
+    const symptomMap: Record<string, { count: number; totalSeverity: number }> = {};
+    for (const log of logs) {
+      if (log.dailySymptoms) {
+        for (const s of log.dailySymptoms) {
+          if (!symptomMap[s.symptomType]) {
+            symptomMap[s.symptomType] = { count: 0, totalSeverity: 0 };
+          }
+          symptomMap[s.symptomType].count++;
+          symptomMap[s.symptomType].totalSeverity += s.severity ?? 0;
+        }
+      }
+    }
+
+    const topSymptoms = Object.entries(symptomMap)
+      .map(([type, stats]) => ({
+        symptomType: type,
+        count: stats.count,
+        avgSeverity: Math.round((stats.totalSeverity / stats.count) * 10) / 10,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
     return {
       avgStress: avg(logs.map((l) => l.stressLevel)),
       avgEnergy: avg(logs.map((l) => l.energyLevel)),
@@ -326,6 +359,7 @@ export class DailyLogsAndSymptomsService {
       highStressDays: logs.filter((l) => l.stressLevel != null && l.stressLevel >= 4).length,
       bbtShiftDetected,
       bbtShiftDate,
+      topSymptoms,
     };
   }
 
@@ -365,6 +399,7 @@ export class DailyLogsAndSymptomsService {
       highStressDays: 0,
       bbtShiftDetected: false,
       bbtShiftDate: null,
+      topSymptoms: [],
     };
   }
 }

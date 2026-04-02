@@ -2,7 +2,8 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwtAuth.guard';
 import { CurrentUserId } from 'src/shared/decorators/currentUserId.decorators';
 import { PredictionsService } from './predictions.service';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PredictionResponseDto } from './dto/predictionResponse.dto';
 
 @ApiTags('Predictions')
 @Controller('predictions')
@@ -13,11 +14,11 @@ export class PredictionsController {
 
   @Get('me')
   @ApiOperation({ summary: 'Get cycle predictions for the current user' })
+  @ApiOkResponse({
+    type: PredictionResponseDto,
+    description: 'Returns the predicted cycle status and current day metrics.',
+  })
   async getPrediction(@CurrentUserId() userId: string) {
-    const prediction = await this.predictionsService.getPredictionForUser(userId);
-    return {
-      success: true,
-      data: prediction,
-    };
+    return await this.predictionsService.getPredictionForUser(userId);
   }
 }
