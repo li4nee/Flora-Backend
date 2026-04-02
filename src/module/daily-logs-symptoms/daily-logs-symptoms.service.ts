@@ -1,16 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DailyLog } from './entities/dailyLogs.entity';
+import { CervicalMucusType, DailyLog } from './entities/dailyLogs.entity';
 import { DailySymptom } from './entities/dailySymptoms.entity';
 import { PeriodCycles } from '../period-cycles/entities/periodCycles.entity';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { InvalidInputError } from 'src/shared/typings/error.typings';
 import { DailyLogCreateDto, DailyLogSymptomCreateDto } from './dto/createDailyLog.dto';
 import { PeriodCyclesService } from '../period-cycles/period-cycles.service';
-import { differenceInDays, format } from 'date-fns';
+import { differenceInDays, format, subDays } from 'date-fns';
 import { DailyLogUpdateDto } from './dto/updateDailyLog.dto';
 import { DailyLogQueryDto, SymptomSortMode } from './dto/queryDailyLog.dto';
 import { subYears } from 'date-fns/subYears';
+
+export interface DailyLogInsights {
+  avgStress: number | null;
+  avgEnergy: number | null;
+  avgMood: number | null;
+  avgBBT: number | null;
+  avgLibido: number | null;
+  eggWhiteMucusDays: number; // strong ovulation indicator
+  totalMedicationDays: number;
+  contraceptiveConsistency: number; // 0-1 ratio of days contraceptive was taken
+  highStressDays: number; // days with stress >= 4
+  // BBT shift detection: did temp rise (post-ovulation sign)?
+  bbtShiftDetected: boolean;
+  bbtShiftDate: Date | null;
+  /** Top symptoms logged in this cycle, sorted by frequency */
+  topSymptoms: { symptomType: string; count: number; avgSeverity: number }[];
+}
 @Injectable()
 export class DailyLogsAndSymptomsService {
   constructor(
@@ -43,6 +60,16 @@ export class DailyLogsAndSymptomsService {
 
   private async selectOnlyId(where: { id?: string; logDate?: string; user: { id: string } }) {
     return this.dailyLogRepo.findOne({ where, select: { id: true } });
+  }
+
+  private async getRange(userId: string, from: string, to: string): Promise<DailyLog[]> {
+    return this.dailyLogRepo.find({
+      where: {
+        user: { id: userId },
+        logDate: Between(from, to),
+      },
+      order: { logDate: 'ASC' },
+    });
   }
 
   async findDailyLogById(
@@ -254,5 +281,125 @@ export class DailyLogsAndSymptomsService {
       throw new InvalidInputError('Daily log not found or unauthorized');
     }
     return void 0;
+  }
+
+  /**
+   * Compute aggregated insights from logs within a cycle window.
+   * Used by PredictionsService to feed lifestyle/biometric signals into the algorithm.
+   *
+   * @param userId
+   * @param cycleStartDate - start of the cycle window
+   * @param dayCount - how many days to look back (default: 35 = max cycle length)
+   */
+  async getInsightsForCycle(userId: string, cycleStartDate: Date): Promise<DailyLogInsights> {
+    const from = format(cycleStartDate, 'yyyy-MM-dd');
+    const to = format(subDays(new Date(), 0), 'yyyy-MM-dd');
+
+    // Use query builder to load dailySymptoms relation
+    const logs = await this.dailyLogRepo.find({
+      where: {
+        user: { id: userId },
+        logDate: Between(from, to),
+      },
+      relations: { dailySymptoms: true }, // Ensure symptoms are loaded
+      order: { logDate: 'ASC' },
+    });
+
+    if (logs.length === 0) {
+      return this.emptyInsights();
+    }
+
+    const avg = (vals: (number | null | undefined)[]) => {
+      const valid = vals.filter((v): v is number => v != null);
+      return valid.length > 0 ? valid.reduce((a, b) => a + b, 0) / valid.length : null;
+    };
+
+    const bbtValues = logs
+      .filter((l) => l.basalBodyTemp != null)
+      .map((l) => ({ date: new Date(l.logDate), bbt: Number(l.basalBodyTemp) }));
+
+    const { bbtShiftDetected, bbtShiftDate } = this.detectBBTShift(bbtValues);
+
+    const contraceptiveLogs = logs.filter((l) => l.tookContraceptive != null);
+    const contraceptiveConsistency =
+      contraceptiveLogs.length > 0 ? contraceptiveLogs.filter((l) => l.tookContraceptive).length / contraceptiveLogs.length : 0;
+
+    // Aggregate symptoms
+    const symptomMap: Record<string, { count: number; totalSeverity: number }> = {};
+    for (const log of logs) {
+      if (log.dailySymptoms) {
+        for (const s of log.dailySymptoms) {
+          if (!symptomMap[s.symptomType]) {
+            symptomMap[s.symptomType] = { count: 0, totalSeverity: 0 };
+          }
+          symptomMap[s.symptomType].count++;
+          symptomMap[s.symptomType].totalSeverity += s.severity ?? 0;
+        }
+      }
+    }
+
+    const topSymptoms = Object.entries(symptomMap)
+      .map(([type, stats]) => ({
+        symptomType: type,
+        count: stats.count,
+        avgSeverity: Math.round((stats.totalSeverity / stats.count) * 10) / 10,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      avgStress: avg(logs.map((l) => l.stressLevel)),
+      avgEnergy: avg(logs.map((l) => l.energyLevel)),
+      avgMood: avg(logs.map((l) => l.moodLevel)),
+      avgBBT: avg(bbtValues.map((b) => b.bbt)),
+      avgLibido: avg(logs.map((l) => l.libidoLevel)),
+      eggWhiteMucusDays: logs.filter((l) => l.cervicalMucus === CervicalMucusType.EGG_WHITE).length,
+      totalMedicationDays: logs.filter((l) => l.medications && l.medications.length > 0).length,
+      contraceptiveConsistency,
+      highStressDays: logs.filter((l) => l.stressLevel != null && l.stressLevel >= 4).length,
+      bbtShiftDetected,
+      bbtShiftDate,
+      topSymptoms,
+    };
+  }
+
+  /**
+   * Detect a BBT thermal shift — a sustained rise of ≥0.2°C over 3 consecutive days
+   * after a lower baseline, indicating ovulation has occurred.
+   */
+  private detectBBTShift(bbtValues: { date: Date; bbt: number }[]): { bbtShiftDetected: boolean; bbtShiftDate: Date | null } {
+    if (bbtValues.length < 6) return { bbtShiftDetected: false, bbtShiftDate: null };
+
+    // Need at least 3 "low" days followed by 3 "high" days
+    for (let i = 3; i <= bbtValues.length - 3; i++) {
+      const lowPhase = bbtValues.slice(i - 3, i).map((v) => v.bbt);
+      const highPhase = bbtValues.slice(i, i + 3).map((v) => v.bbt);
+
+      const lowAvg = lowPhase.reduce((a, b) => a + b, 0) / lowPhase.length;
+      const highAvg = highPhase.reduce((a, b) => a + b, 0) / highPhase.length;
+
+      if (highAvg - lowAvg >= 0.2) {
+        return { bbtShiftDetected: true, bbtShiftDate: bbtValues[i].date };
+      }
+    }
+
+    return { bbtShiftDetected: false, bbtShiftDate: null };
+  }
+
+  private emptyInsights(): DailyLogInsights {
+    return {
+      avgStress: null,
+      avgEnergy: null,
+      avgMood: null,
+      avgBBT: null,
+      avgLibido: null,
+      eggWhiteMucusDays: 0,
+      totalMedicationDays: 0,
+      contraceptiveConsistency: 0,
+      highStressDays: 0,
+      bbtShiftDetected: false,
+      bbtShiftDate: null,
+      topSymptoms: [],
+    };
   }
 }
