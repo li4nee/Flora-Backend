@@ -41,4 +41,12 @@ export class GlobalConfigService {
       refreshTokenSecret: this.env.JWT_REFRESH_SECRET,
     };
   }
+
+  get cloudinary() {
+    return {
+      CLOUDINARY_CLOUD_NAME: this.env.CLOUDINARY_CLOUD_NAME,
+      CLOUDINARY_API_KEY: this.env.CLOUDINARY_API_KEY,
+      CLOUDINARY_API_SECRET: this.env.CLOUDINARY_API_SECRET,
+    };
+  }
 }

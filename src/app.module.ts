@@ -9,6 +9,8 @@ import { ReportsModule } from './module/reports/reports.module';
 import { PeriodCyclesModule } from './module/period-cycles/period-cycles.module';
 import { NotificationsModule } from './module/notifications/notifications.module';
 import { DailyLogsAndSymptomsModule } from './module/daily-logs-symptoms/daily-logs-symptoms.module';
+import { CommunityModule } from './module/community/community.module';
+import { CloudinaryModule } from './module/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { DailyLogsAndSymptomsModule } from './module/daily-logs-symptoms/daily-l
     DailyLogsAndSymptomsModule,
     PeriodCyclesModule,
     NotificationsModule,
+    CommunityModule,
+    CloudinaryModule,
   ],
 })
 export class AppModule {}
