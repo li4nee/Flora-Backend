@@ -37,22 +37,14 @@ export class PredictionsService {
         length: c.cycleLength!,
         startDate: new Date(c.startDate),
       }))
-      .slice()    // defensive copy before reversing
+      .slice() // defensive copy before reversing
       .reverse(); // engine expects oldest → newest
 
     // Fetch daily log insights anchored to the last LOGGED period start.
     // The engine itself will roll the anchor forward to today — we just need
     // any lifestyle signals the user logged around their last recorded cycle.
-    const insights = await this.dailyLogsService.getInsightsForCycle(
-      userId,
-      new Date(lastPeriod.startDate),
-    );
+    const insights = await this.dailyLogsService.getInsightsForCycle(userId, new Date(lastPeriod.startDate));
 
-    return CyclePredictionEngine.predict(
-      formattedCycles,
-      [],
-      new Date(lastPeriod.startDate),
-      insights,
-    );
+    return CyclePredictionEngine.predict(formattedCycles, [], new Date(lastPeriod.startDate), insights);
   }
 }

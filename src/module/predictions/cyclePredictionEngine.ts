@@ -109,16 +109,16 @@ const SYMPTOM_COEFFICIENTS: Record<string, number> = {
  * lifestyle factors and menstrual cycle length.
  */
 const DAILY_LOG_COEFFICIENTS = {
-  stressPerPoint: 0.4,        // per 1-pt above baseline (3), per day of high stress
-  sleepDeficitPerHour: 0.3,   // per hour below 7h, per poor-sleep day
+  stressPerPoint: 0.4, // per 1-pt above baseline (3), per day of high stress
+  sleepDeficitPerHour: 0.3, // per hour below 7h, per poor-sleep day
   intensiveExercisePerDay: 0.5, // per day of intense exercise this cycle
-  eggWhiteMucusPerDay: -0.6,  // negative: egg-white mucus suggests ovulation is near/done
-  lowLibidoShift: 0.3,        // if avg libido < 2, may indicate hormonal imbalance
+  eggWhiteMucusPerDay: -0.6, // negative: egg-white mucus suggests ovulation is near/done
+  lowLibidoShift: 0.3, // if avg libido < 2, may indicate hormonal imbalance
 };
 
 const DEFAULT_CYCLE_LENGTH = 28;
 const DEFAULT_PERIOD_LENGTH = 5; // assumed bleed days for phase calculation
-const ALPHA = 0.3;              // exponential smoothing factor
+const ALPHA = 0.3; // exponential smoothing factor
 const OUTLIER_DOWNWEIGHT = 0.3; // γ — weight reduction for outliers
 
 /** Minimum valid cycle length accepted by the engine */
@@ -190,10 +190,7 @@ export class CyclePredictionEngine {
     const formulaOvulationDate = addDays(currentCycleStart, predicted - 14);
     const bbtRaw = dailyLogInsights?.bbtShiftDate ?? null;
     // Only use BBT override when it falls inside the current (rolled-forward) cycle
-    const bbtIsCurrentCycle =
-      bbtRaw !== null &&
-      bbtRaw >= currentCycleStart &&
-      bbtRaw <= addDays(currentCycleStart, predicted);
+    const bbtIsCurrentCycle = bbtRaw !== null && bbtRaw >= currentCycleStart && bbtRaw <= addDays(currentCycleStart, predicted);
     const ovulationDate = bbtIsCurrentCycle ? bbtRaw! : formulaOvulationDate;
     const bbtConfirmedOvulationDate = bbtIsCurrentCycle ? bbtRaw : null;
 
@@ -462,9 +459,7 @@ export class CyclePredictionEngine {
 
     // ── BBT Shift Note ───────────────────────────────────────────────────────
     if (insights.bbtShiftDetected && insights.bbtShiftDate) {
-      activeAdjustments.push(
-        `BBT thermal shift detected on ${insights.bbtShiftDate.toDateString()} — ovulation date confirmed`,
-      );
+      activeAdjustments.push(`BBT thermal shift detected on ${insights.bbtShiftDate.toDateString()} — ovulation date confirmed`);
     }
 
     return { dlAdj, activeAdjustments };
@@ -476,10 +471,7 @@ export class CyclePredictionEngine {
    * Pregnancy risk: how many days past the expected next period date is "today"?
    * Always uses the rolled-forward currentCycleStart so this is never stale.
    */
-  private static assessPregnancyRisk(
-    currentCycleStart: Date,
-    predictedLength: number,
-  ): 'low' | 'medium' | 'high' {
+  private static assessPregnancyRisk(currentCycleStart: Date, predictedLength: number): 'low' | 'medium' | 'high' {
     const today = this.today();
     const expectedNext = addDays(currentCycleStart, predictedLength);
     const daysLate = Math.floor((today.getTime() - expectedNext.getTime()) / (1000 * 60 * 60 * 24));
@@ -504,8 +496,7 @@ export class CyclePredictionEngine {
 
     const ovulationDate = addDays(currentCycleStart, predicted - 14);
     const bbtRaw = dailyLogInsights?.bbtShiftDate ?? null;
-    const bbtIsCurrentCycle =
-      bbtRaw !== null && bbtRaw >= currentCycleStart && bbtRaw <= addDays(currentCycleStart, predicted);
+    const bbtIsCurrentCycle = bbtRaw !== null && bbtRaw >= currentCycleStart && bbtRaw <= addDays(currentCycleStart, predicted);
     const effectiveOvulation = bbtIsCurrentCycle ? bbtRaw! : ovulationDate;
     const bbtConfirmedOvulationDate = bbtIsCurrentCycle ? bbtRaw : null;
 

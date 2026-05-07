@@ -52,11 +52,7 @@ export class ReportsService {
       .reverse();
 
     const lastPeriod = cycles[0];
-    const prediction = CyclePredictionEngine.predict(
-      formattedCycles,
-      [],
-      new Date(lastPeriod.startDate),
-    );
+    const prediction = CyclePredictionEngine.predict(formattedCycles, [], new Date(lastPeriod.startDate));
 
     const currentInsights = await this.dailyLogsService.getInsightsForCycle(userId, prediction.currentCycleStart);
 
@@ -74,7 +70,10 @@ export class ReportsService {
       recentTrends: {
         cycleLengths: cycleLengths.slice(0, 6).reverse(),
         periodLengths: periodLengths.slice(0, 6).reverse(),
-        dates: cycles.slice(0, 6).map((c) => c.startDate).reverse(),
+        dates: cycles
+          .slice(0, 6)
+          .map((c) => c.startDate)
+          .reverse(),
       },
       currentCycleInsights: currentInsights,
       dataStatus: {
