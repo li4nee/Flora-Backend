@@ -9,11 +9,12 @@ import { JwtStrategy } from './strategies/jwt.strategies';
 import { AuthController } from './auth.controller';
 import { UserModule } from '../user/user.module';
 import { RefreshToken } from './entities/refreshToken.entity';
+import { EmailToken } from './entities/emailToken.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 @Module({
   imports: [
     UserModule,
-    TypeOrmModule.forFeature([User, RefreshToken]),
+    TypeOrmModule.forFeature([User, RefreshToken, EmailToken]),
     PassportModule,
     JwtModule.registerAsync({
       inject: [GlobalConfigService],
