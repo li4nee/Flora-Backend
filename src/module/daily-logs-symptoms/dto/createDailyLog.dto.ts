@@ -188,6 +188,29 @@ export class DailyLogCreateDto {
   tookContraceptive?: boolean;
 
   @ApiProperty({
+    type: Number,
+    example: 8.5,
+    description: 'Hours of sleep',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(24)
+  @Type(() => Number)
+  sleepHours?: number;
+
+  @ApiProperty({
+    type: Boolean,
+    example: false,
+    description: 'Whether intensive exercise was performed',
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isIntensiveExercise?: boolean;
+
+  @ApiProperty({
     type: [DailyLogSymptomCreateDto],
     description: 'Array of daily symptoms',
     required: false,
