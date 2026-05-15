@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PeriodCyclesService } from '../period-cycles/period-cycles.service';
 import { DailyLogsAndSymptomsService } from '../daily-logs-symptoms/daily-logs-symptoms.service';
 import { mean, stdDev } from 'src/shared/utils/base.utils';
-import { CycleData, CyclePredictionEngine } from '../predictions/cyclePredictionEngine';
+import { CycleData } from '../predictions/cyclePredictionEngine';
+import { BayesianPredictionEngine } from '../predictions/bayesianPredictionEngine';
 import { format } from 'date-fns';
 import { DailyLogInsights } from '../daily-logs-symptoms/daily-logs-symptoms.service';
 const PDFDocument = require('pdfkit');
@@ -53,7 +54,8 @@ export class ReportsService {
       .reverse();
 
     const lastPeriod = cycles[0];
-    const prediction = CyclePredictionEngine.predict(formattedCycles, [], new Date(lastPeriod.startDate));
+    const insights = await this.dailyLogsService.getInsightsForCycle(userId, new Date(lastPeriod.startDate));
+    const prediction = BayesianPredictionEngine.predict(formattedCycles, insights.topSymptoms, new Date(lastPeriod.startDate), insights);
 
     const currentInsights = await this.dailyLogsService.getInsightsForCycle(userId, prediction.currentCycleStart);
 

@@ -29,8 +29,18 @@ describe('BayesianPredictionEngine', () => {
       const insights: DailyLogInsights = {
         highStressDays: 5,
         avgStress: 4,
+        avgEnergy: null,
+        avgMood: null,
+        avgBBT: null,
+        avgLibido: null,
+        avgSleep: null,
         eggWhiteMucusDays: 0,
         intensiveExerciseDays: 0,
+        totalMedicationDays: 0,
+        contraceptiveConsistency: 0,
+        bbtShiftDetected: false,
+        bbtShiftDate: null,
+        topSymptoms: [],
       };
       const result = BayesianPredictionEngine.predict([], [], lastPeriodStart, insights);
       expect(result.predictedCycleLength).toBeGreaterThan(28);
