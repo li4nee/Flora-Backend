@@ -138,7 +138,10 @@ export class BayesianPredictionEngine {
     }
 
     const userMean = mean(lengths);
-    const userVar = lengths.length > 1 ? stdDev(lengths, userMean) ** 2 : POPULATION_VAR;
+    // With a single observation, variance is undefined; use a reduced fraction of
+    // POPULATION_VAR so the one personal data point pulls the posterior toward the
+    // user's actual value rather than being fully diluted by the population prior.
+    const userVar = lengths.length > 1 ? stdDev(lengths, userMean) ** 2 : POPULATION_VAR / 2;
     const obsVar = Math.max(1, userVar);
 
     const n = lengths.length;
