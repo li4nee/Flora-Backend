@@ -222,6 +222,10 @@ export class BayesianPredictionEngine {
       activeAdjustments.push('Fertile mucus detected: adjusting for imminent ovulation');
     }
 
+    if (insights.bbtShiftDetected && insights.bbtShiftDate) {
+      activeAdjustments.push(`BBT thermal shift detected on ${insights.bbtShiftDate.toDateString()} — ovulation date confirmed`);
+    }
+
     return { dlAdj, activeAdjustments };
   }
 
