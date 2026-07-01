@@ -17,7 +17,7 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly passwordUtils: PasswordUtils,
-  ) {}
+  ) { }
 
   private async findByEmailBase(email: string, includeProfile = false): Promise<User | null> {
     return this.userRepo.findOne({
@@ -47,7 +47,7 @@ export class UserService {
   }
 
   private async getUserPasswordBase(where: { id?: string; email?: string }): Promise<User | null> {
-    const qb = this.userRepo.createQueryBuilder('user').select(['user.id', 'user.password']);
+    const qb = this.userRepo.createQueryBuilder('user').select(['user.id', 'user.password', "user.isEmailVerified"]);
 
     if (where.id) {
       qb.where('user.id = :id', { id: where.id });
@@ -175,5 +175,13 @@ export class UserService {
     notificationSettings.reminderTimeInUTC = dto.reminderTimeInUTC ?? notificationSettings.reminderTimeInUTC;
 
     return this.userRepo.save(user);
+  }
+
+  async markEmailVerified(userId: string): Promise<void> {
+    await this.userRepo.update({ id: userId }, { isEmailVerified: true });
+  }
+
+  async updatePasswordDirect(userId: string, hashedPassword: string): Promise<void> {
+    await this.userRepo.update({ id: userId }, { password: hashedPassword });
   }
 }

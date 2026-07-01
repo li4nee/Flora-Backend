@@ -1,4 +1,5 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/guards/jwtAuth.guard';
 import { CurrentUserId } from 'src/shared/decorators/currentUserId.decorators';
@@ -20,5 +21,19 @@ export class ReportsController {
   })
   async getMyReport(@CurrentUserId() userId: string) {
     return await this.reportsService.getUserReport(userId);
+  }
+
+  @Get('me/pdf')
+  @ApiOperation({ summary: 'Export a professional PDF health report' })
+  async exportMyReportPdf(@CurrentUserId() userId: string, @Res() res: Response) {
+    const pdfBuffer = await this.reportsService.generatePdfReport(userId);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="Flora_Health_Report.pdf"',
+      'Content-Length': pdfBuffer.length,
+    });
+
+    res.end(pdfBuffer);
   }
 }
