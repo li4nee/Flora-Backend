@@ -22,6 +22,8 @@ export interface DailyLogInsights {
   totalMedicationDays: number;
   contraceptiveConsistency: number; // 0-1 ratio of days contraceptive was taken
   highStressDays: number; // days with stress >= 4
+  avgSleep?: number | null; // average sleep hours (Jeon et al. 2023)
+  intensiveExerciseDays?: number; // days with intense activity (De Souza et al. 2010)
   // BBT shift detection: did temp rise (post-ovulation sign)?
   bbtShiftDetected: boolean;
   bbtShiftDate: Date | null;
@@ -102,6 +104,8 @@ export class DailyLogsAndSymptomsService {
       libidoLevel: dto.libidoLevel,
       medications: dto.medications,
       tookContraceptive: dto.tookContraceptive,
+      sleepHours: dto.sleepHours,
+      isIntensiveExercise: dto.isIntensiveExercise,
       user: { id: userId },
       periodCycle,
     });
@@ -268,6 +272,8 @@ export class DailyLogsAndSymptomsService {
     if (dto.libidoLevel !== undefined) log.libidoLevel = dto.libidoLevel;
     if (dto.medications !== undefined) log.medications = dto.medications;
     if (dto.tookContraceptive !== undefined) log.tookContraceptive = dto.tookContraceptive;
+    if (dto.sleepHours !== undefined) log.sleepHours = dto.sleepHours;
+    if (dto.isIntensiveExercise !== undefined) log.isIntensiveExercise = dto.isIntensiveExercise;
 
     if (dto.dailySymptoms) {
       log.dailySymptoms = this.createSymptoms(dto.dailySymptoms);
@@ -357,6 +363,8 @@ export class DailyLogsAndSymptomsService {
       totalMedicationDays: logs.filter((l) => l.medications && l.medications.length > 0).length,
       contraceptiveConsistency,
       highStressDays: logs.filter((l) => l.stressLevel != null && l.stressLevel >= 4).length,
+      avgSleep: avg(logs.map((l) => l.sleepHours)),
+      intensiveExerciseDays: logs.filter((l) => l.isIntensiveExercise).length,
       bbtShiftDetected,
       bbtShiftDate,
       topSymptoms,

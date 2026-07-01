@@ -208,7 +208,7 @@ export class CyclePredictionEngine {
     // ── Frontend cycle-status fields ──────────────────────────────────────────
     const frontendFields = this.computeFrontendFields(today, currentCycleStart, predicted, ovulationDate, nextPeriodDate);
 
-    const isIrregular = stdDevI > 8;
+    const isIrregular = stdDevI > 7;
     const pregnancyRisk = this.assessPregnancyRisk(currentCycleStart, predicted);
 
     return {

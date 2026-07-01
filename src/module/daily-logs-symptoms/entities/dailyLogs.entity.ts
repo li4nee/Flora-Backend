@@ -93,11 +93,26 @@ export class DailyLog extends GlobalEntity {
 
   /**
    * Stress level 1–5. High chronic stress elevates cortisol,
-   * suppressing GnRH → delayed/missed ovulation, longer cycles.
+   * suppresses GnRH → delayed/missed ovulation, longer cycles.
    * Tracking stress helps identify correlations between stress levels and cycle irregularities, and can signal potential issues like hypothalamic amenorrhea when consistently high stress levels coincide with missed periods or anovulatory cycles.
    */
   @Column({ type: 'int', nullable: true })
   stressLevel?: number; // 1 (low) to 5 (high)
+
+  /**
+   * Average sleep hours. Sleep deprivation impacts cycle regularity.
+   * [Source: Jeon et al. 2023]
+   */
+  @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true })
+  sleepHours?: number;
+
+  /**
+   * Was intensive exercise performed today?
+   * High physical stress can delay the follicular phase.
+   * [Source: De Souza et al. 2010]
+   */
+  @Column({ type: 'boolean', default: false })
+  isIntensiveExercise?: boolean;
 
   /**
    * Overall energy level 1–5. Low energy can correlate with

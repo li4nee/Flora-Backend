@@ -6,20 +6,18 @@ import { JwtAuthGuard } from './guards/jwtAuth.guard';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RefreshTokenDto } from './dto/refreshToken.dto';
 import { CurrentUserId } from 'src/shared/decorators/currentUserId.decorators';
+import { VerifyEmailDto } from './dto/verifyEmail.dto';
+import { ResendVerificationDto } from './dto/resendVerification.dto';
+import { ForgotPasswordDto } from './dto/forgotPassword.dto';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
 
-/**
- * Todo:
- * - Add email verification and password reset
- * - Rate limit login attempts to prevent brute-force attacks and account lockouts
- * - Blacklisting of access tokens on logout
- */
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
+  @ApiOperation({ summary: 'Register a new user (sends verification email)' })
   @ApiBody({ type: AuthRegisterDto })
   async register(@Body() body: AuthRegisterDto) {
     const result = await this.authService.register(body);
@@ -33,6 +31,35 @@ export class AuthController {
     const result = await this.authService.login(body);
     return result;
   }
+
+  @Post('verify-email')
+  @ApiOperation({ summary: 'Verify email address with OTP' })
+  @ApiBody({ type: VerifyEmailDto })
+  async verifyEmail(@Body() body: VerifyEmailDto) {
+    return await this.authService.verifyEmail(body.email, body.otp);
+  }
+
+  @Post('resend-verification')
+  @ApiOperation({ summary: 'Resend verification email with a new OTP' })
+  @ApiBody({ type: ResendVerificationDto })
+  async resendVerification(@Body() body: ResendVerificationDto) {
+    return await this.authService.resendVerificationEmail(body.email);
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request a password reset OTP via email' })
+  @ApiBody({ type: ForgotPasswordDto })
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    return await this.authService.forgotPassword(body.email);
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password using OTP' })
+  @ApiBody({ type: ResetPasswordDto })
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    return await this.authService.resetPassword(body.email, body.otp, body.newPassword);
+  }
+
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
