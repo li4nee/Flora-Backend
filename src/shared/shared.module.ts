@@ -4,6 +4,7 @@ import { LoggerService } from './config/loggerService.config';
 import { JwtService } from './config/jwt.config';
 import { PasswordUtils } from './utils/password.utils';
 import { EmailService } from './utils/email.utils';
+import { PushNotificationService } from './utils/pushNotification.utils';
 import { MailerModule } from '@nestjs-modules/mailer';
 
 @Global()
@@ -27,7 +28,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
       }),
     }),
   ],
-  providers: [GlobalConfigService, LoggerService, JwtService, PasswordUtils, EmailService],
-  exports: [GlobalConfigService, LoggerService, JwtService, PasswordUtils, EmailService],
+  providers: [GlobalConfigService, LoggerService, JwtService, PasswordUtils, EmailService, PushNotificationService],
+  exports: [GlobalConfigService, LoggerService, JwtService, PasswordUtils, EmailService, PushNotificationService],
 })
 export class SharedModule {}
