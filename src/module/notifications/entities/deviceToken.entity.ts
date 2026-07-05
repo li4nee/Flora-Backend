@@ -25,7 +25,7 @@ export class DeviceToken extends GlobalEntity {
   @Column({ unique: true })
   token!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   platform!: string | null;
 
   @Column({ type: 'timestamp' })
