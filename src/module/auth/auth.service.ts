@@ -2,17 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthRegisterDto } from './dto/registerUser.dto';
 import { AuthLoginDto } from './dto/loginUser.dto';
-import { InvalidInputError, PermissionNotGrantedError } from 'src/shared/typings/error.typings';
+import { InvalidInputError, PermissionNotGrantedError, UnauthorizedError } from 'src/shared/typings/error.typings';
 import { UserService } from '../user/user.service';
 import { PasswordUtils } from 'src/shared/utils/password.utils';
 import { GlobalConfigService } from 'src/shared/config/global.config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshToken } from './entities/refreshToken.entity';
-import { MoreThan, Repository, UpdateResult } from 'typeorm';
+import { EmailToken } from './entities/emailToken.entity';
+import { LessThan, MoreThan, Repository, UpdateResult } from 'typeorm';
 import { StringValue } from 'ms';
 import { RefreshTokenDto } from './dto/refreshToken.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { LoggerService } from 'src/shared/config/loggerService.config';
+import { EmailService } from 'src/shared/utils/email.utils';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -20,11 +23,15 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepo: Repository<RefreshToken>,
 
+    @InjectRepository(EmailToken)
+    private readonly emailTokenRepo: Repository<EmailToken>,
+
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly passwordUtils: PasswordUtils,
     private readonly config: GlobalConfigService,
     private readonly logger: LoggerService,
+    private readonly emailService: EmailService,
   ) {}
 
   async register(body: AuthRegisterDto): Promise<{ message: string }> {
@@ -38,10 +45,18 @@ export class AuthService {
 
     const hashedPassword = await this.passwordUtils.hashPassword(password);
 
-    await this.userService.create(email, hashedPassword, profile);
+    const user = await this.userService.create(email, hashedPassword, profile);
+
+    this.sendVerificationEmail(user.id, email)
+      .then(() => {
+        this.logger.info(`Verification email sent to ${email} for user ID ${user.id}`);
+      })
+      .catch((error) => {
+        this.logger.error(`Failed to send verification email to ${email} for user ID ${user.id}`, error);
+      });
 
     return {
-      message: 'User registered successfully. Please login to continue.',
+      message: 'User registered successfully. A verification code has been sent to your email.',
     };
   }
 
@@ -55,7 +70,14 @@ export class AuthService {
     const isMatch = await this.passwordUtils.comparePassword(body.password, user.password);
 
     if (!isMatch) {
-      throw new PermissionNotGrantedError('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    console.log(user);
+    const isEmailVerified = user?.isEmailVerified ?? false;
+
+    if (!isEmailVerified) {
+      throw new PermissionNotGrantedError('Email not verified. Please verify your email before logging in.');
     }
 
     const accessToken = this.createAccessToken(user.id);
@@ -70,15 +92,111 @@ export class AuthService {
     await this.saveRefreshToken(user.id, hashedRefreshToken, expiresAt);
 
     return {
-      message: 'Login successful',
+      message: isEmailVerified ? 'Login successful' : 'Login successful. Please verify your email address.',
       data: {
         accessToken: accessToken,
         refreshToken: refreshToken,
         user: {
           id: user.id,
+          isEmailVerified,
         },
       },
     };
+  }
+
+  async sendVerificationEmail(userId: string, email: string): Promise<void> {
+    const otp = await this.createEmailToken(userId, 'verify');
+
+    try {
+      await this.emailService.sendOtpEmail(email, otp, 'verify');
+    } catch {
+      this.logger.warn(`Failed to send verification email to ${email}, OTP: ${otp}`);
+    }
+  }
+
+  async verifyEmail(email: string, otp: string): Promise<{ message: string }> {
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new InvalidInputError('Invalid email or OTP');
+    }
+
+    if (user.isEmailVerified) {
+      return { message: 'Email is already verified' };
+    }
+
+    const isValid = await this.validateEmailToken(user.id, otp, 'verify');
+    if (!isValid) {
+      throw new InvalidInputError('Invalid or expired OTP');
+    }
+
+    await this.userService.markEmailVerified(user.id);
+
+    return { message: 'Email verified successfully' };
+  }
+
+  async resendVerificationEmail(email: string): Promise<{ message: string }> {
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      return { message: 'If an account with this email exists, a verification code has been sent.' };
+    }
+
+    if (user.isEmailVerified) {
+      return { message: 'Email is already verified' };
+    }
+
+    await this.invalidateAllEmailTokens(user.id, 'verify');
+
+    await this.sendVerificationEmail(user.id, email);
+
+    return { message: 'If an account with this email exists, a verification code has been sent.' };
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const user = await this.userService.findByEmail(email);
+
+    const successMessage = 'If an account with this email exists, a password reset code has been sent.';
+
+    if (!user) {
+      return { message: successMessage };
+    }
+
+    await this.invalidateAllEmailTokens(user.id, 'reset');
+
+    const otp = await this.createEmailToken(user.id, 'reset');
+
+    try {
+      this.emailService
+        .sendOtpEmail(email, otp, 'reset')
+        .then(() => {
+          this.logger.info(`Password reset email sent to ${email} for user ID ${user.id}`);
+        })
+        .catch((e) => {
+          this.logger.error(`Failed to send password reset email to ${email} for user ID ${user.id}`, e);
+        });
+    } catch {
+      this.logger.warn(`Failed to send reset email to ${email}, OTP: ${otp}`);
+    }
+
+    return { message: successMessage };
+  }
+
+  async resetPassword(email: string, otp: string, newPassword: string): Promise<{ message: string }> {
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new InvalidInputError('Invalid email or OTP');
+    }
+
+    const isValid = await this.validateEmailToken(user.id, otp, 'reset');
+    if (!isValid) {
+      throw new InvalidInputError('Invalid or expired OTP');
+    }
+
+    const hashedPassword = await this.passwordUtils.hashPassword(newPassword);
+    await this.userService.updatePasswordDirect(user.id, hashedPassword);
+
+    await this.refreshTokenRepo.update({ userId: user.id }, { trash: true });
+
+    return { message: 'Password reset successfully. Please login with your new password.' };
   }
 
   async refreshToken(body: RefreshTokenDto) {
@@ -138,21 +256,82 @@ export class AuthService {
   }
 
   @Cron(CronExpression.EVERY_6_HOURS)
-  async cleanExpiredRefreshTokens() {
+  async cleanExpiredTokens() {
     try {
       const now = new Date();
 
-      const result = await this.refreshTokenRepo
+      const refreshResult = await this.refreshTokenRepo
         .createQueryBuilder()
         .delete()
         .from(RefreshToken)
         .where('expiresAt < :now', { now })
         .execute();
 
-      this.logger.info(`Cron: Deleted ${result.affected} expired refresh tokens`);
+      const emailResult = await this.emailTokenRepo
+        .createQueryBuilder()
+        .delete()
+        .from(EmailToken)
+        .where('expiresAt < :now', { now })
+        .execute();
+
+      this.logger.info(
+        `Cron: Deleted ${refreshResult.affected} expired refresh tokens, ${emailResult.affected} expired email tokens`,
+      );
     } catch (error) {
-      this.logger.error('Cron: Error deleting expired refresh tokens', error);
+      this.logger.error('Cron: Error deleting expired tokens', error);
     }
+  }
+
+  private generateOtp(): string {
+    // 6 DIGIT FROM 100000-999999
+    return crypto.randomInt(100000, 999999).toString();
+  }
+
+  private async createEmailToken(userId: string, type: 'verify' | 'reset'): Promise<string> {
+    const otp = this.generateOtp();
+    const hashedOtp = await this.passwordUtils.hashPassword(otp);
+
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10); // 10 minutes expiry
+
+    const token = this.emailTokenRepo.create({
+      token: hashedOtp,
+      userId,
+      expiresAt,
+      type,
+      isUsed: false,
+    });
+
+    await this.emailTokenRepo.save(token);
+    return otp; // return plaintext OTP for sending via email but in db only store hash
+  }
+
+  private async validateEmailToken(userId: string, otp: string, type: 'verify' | 'reset'): Promise<boolean> {
+    const tokens = await this.emailTokenRepo.find({
+      where: {
+        userId,
+        type,
+        isUsed: false,
+        expiresAt: MoreThan(new Date()),
+      },
+      order: { createdAt: 'DESC' },
+    });
+
+    for (const token of tokens) {
+      const isMatch = await this.passwordUtils.comparePassword(otp, token.token);
+      if (isMatch) {
+        // Mark token as used
+        token.isUsed = true;
+        await this.emailTokenRepo.save(token);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private async invalidateAllEmailTokens(userId: string, type: 'verify' | 'reset'): Promise<void> {
+    await this.emailTokenRepo.update({ userId, type, isUsed: false }, { isUsed: true });
   }
 
   private async saveRefreshToken(userId: string, token: string, expiresAt: Date): Promise<RefreshToken> {
