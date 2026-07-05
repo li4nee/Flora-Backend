@@ -19,7 +19,7 @@ import { PredictionResult, CycleData, SymptomData, ConfidenceLevel } from './cyc
 // ─── Research-Backed Priors ──────────────────────────────────────────────────
 
 const POPULATION_MEAN = 28.1;
-const POPULATION_SD = 5.2; 
+const POPULATION_SD = 5.2;
 const POPULATION_VAR = POPULATION_SD * POPULATION_SD;
 
 const CLINICAL_ADJUSTMENTS = {
@@ -100,11 +100,7 @@ export class BayesianPredictionEngine {
     const fertileWindowEnd = addDays(ovulationDate, 1);
 
     // ── Step 6: Confidence and Uncertainty ───────────────────────────────────
-    const { confidence, confidenceNote } = this.evaluateCertainty(
-      validLengths.length,
-      posteriorVar,
-      estimatedCyclesForward,
-    );
+    const { confidence, confidenceNote } = this.evaluateCertainty(validLengths.length, posteriorVar, estimatedCyclesForward);
 
     // ── Step 7: Frontend Lifecycle Fields ────────────────────────────────────
     const frontendFields = this.computeFrontendFields(today, currentCycleStart, predicted, ovulationDate, nextPeriodDate);
@@ -199,7 +195,10 @@ export class BayesianPredictionEngine {
     const activeAdjustments: string[] = [];
 
     if (insights.highStressDays > 0) {
-      const impact = Math.min(CLINICAL_ADJUSTMENTS.stress.maxDelay, insights.highStressDays * CLINICAL_ADJUSTMENTS.stress.meanDelay);
+      const impact = Math.min(
+        CLINICAL_ADJUSTMENTS.stress.maxDelay,
+        insights.highStressDays * CLINICAL_ADJUSTMENTS.stress.meanDelay,
+      );
       dlAdj += impact;
       activeAdjustments.push(`Stress detected (+${impact.toFixed(1)}d) [Source: Schliep et al. 2015]`);
     }
@@ -208,7 +207,9 @@ export class BayesianPredictionEngine {
       const deficit = 7 - insights.avgSleep;
       const impact = deficit * CLINICAL_ADJUSTMENTS.sleep.deficitImpact;
       dlAdj += impact;
-      activeAdjustments.push(`Sleep deficit (${insights.avgSleep.toFixed(1)}h) (+${impact.toFixed(1)}d) [Source: Jeon et al. 2023]`);
+      activeAdjustments.push(
+        `Sleep deficit (${insights.avgSleep.toFixed(1)}h) (+${impact.toFixed(1)}d) [Source: Jeon et al. 2023]`,
+      );
     }
 
     if (insights.intensiveExerciseDays != null && insights.intensiveExerciseDays > 0) {

@@ -17,7 +17,7 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly passwordUtils: PasswordUtils,
-  ) { }
+  ) {}
 
   private async findByEmailBase(email: string, includeProfile = false): Promise<User | null> {
     return this.userRepo.findOne({
@@ -47,7 +47,7 @@ export class UserService {
   }
 
   private async getUserPasswordBase(where: { id?: string; email?: string }): Promise<User | null> {
-    const qb = this.userRepo.createQueryBuilder('user').select(['user.id', 'user.password', "user.isEmailVerified"]);
+    const qb = this.userRepo.createQueryBuilder('user').select(['user.id', 'user.password', 'user.isEmailVerified']);
 
     if (where.id) {
       qb.where('user.id = :id', { id: where.id });

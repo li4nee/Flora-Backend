@@ -191,7 +191,7 @@ export class CyclePredictionEngine {
     const bbtRaw = dailyLogInsights?.bbtShiftDate ?? null;
     // Only use BBT override when it falls inside the current (rolled-forward) cycle
     const bbtIsCurrentCycle = bbtRaw !== null && bbtRaw >= currentCycleStart && bbtRaw <= addDays(currentCycleStart, predicted);
-    const ovulationDate = bbtIsCurrentCycle ? bbtRaw! : formulaOvulationDate;
+    const ovulationDate = bbtIsCurrentCycle ? bbtRaw : formulaOvulationDate;
     const bbtConfirmedOvulationDate = bbtIsCurrentCycle ? bbtRaw : null;
 
     const nextPeriodDate = addDays(currentCycleStart, predicted);
@@ -497,7 +497,7 @@ export class CyclePredictionEngine {
     const ovulationDate = addDays(currentCycleStart, predicted - 14);
     const bbtRaw = dailyLogInsights?.bbtShiftDate ?? null;
     const bbtIsCurrentCycle = bbtRaw !== null && bbtRaw >= currentCycleStart && bbtRaw <= addDays(currentCycleStart, predicted);
-    const effectiveOvulation = bbtIsCurrentCycle ? bbtRaw! : ovulationDate;
+    const effectiveOvulation = bbtIsCurrentCycle ? bbtRaw : ovulationDate;
     const bbtConfirmedOvulationDate = bbtIsCurrentCycle ? bbtRaw : null;
 
     const nextPeriodDate = addDays(currentCycleStart, predicted);

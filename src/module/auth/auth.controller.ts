@@ -14,7 +14,7 @@ import { ResetPasswordDto } from './dto/resetPassword.dto';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user (sends verification email)' })
@@ -59,7 +59,6 @@ export class AuthController {
   async resetPassword(@Body() body: ResetPasswordDto) {
     return await this.authService.resetPassword(body.email, body.otp, body.newPassword);
   }
-
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
