@@ -164,7 +164,7 @@ describe('BayesianPredictionEngine — daily log adjustments', () => {
     const insights = { ...emptyInsights(), highStressDays: 5 };
     const r = BayesianPredictionEngine.predict([], [], LAST_PERIOD, insights);
     expect(r.predictedCycleLength).toBeGreaterThan(28);
-    expect(r.activeAdjustments.some(a => a.includes('Stress'))).toBe(true);
+    expect(r.activeAdjustments.some((a) => a.includes('Stress'))).toBe(true);
   });
 
   it('stress delay is capped at maxDelay (2.5 days)', () => {
@@ -182,7 +182,7 @@ describe('BayesianPredictionEngine — daily log adjustments', () => {
     const rGood = BayesianPredictionEngine.predict([], [], LAST_PERIOD, good);
     const rPoor = BayesianPredictionEngine.predict([], [], LAST_PERIOD, poor);
     expect(rPoor.predictedCycleLength).toBeGreaterThanOrEqual(rGood.predictedCycleLength);
-    expect(rPoor.activeAdjustments.some(a => a.includes('Sleep deficit'))).toBe(true);
+    expect(rPoor.activeAdjustments.some((a) => a.includes('Sleep deficit'))).toBe(true);
   });
 
   it('avgSleep >= 7 triggers no sleep penalty', () => {
@@ -190,14 +190,14 @@ describe('BayesianPredictionEngine — daily log adjustments', () => {
     const rOk = BayesianPredictionEngine.predict([], [], LAST_PERIOD, ok);
     const rBase = BayesianPredictionEngine.predict([], [], LAST_PERIOD);
     expect(rOk.predictedCycleLength).toBe(rBase.predictedCycleLength);
-    expect(rOk.activeAdjustments.some(a => a.includes('Sleep'))).toBe(false);
+    expect(rOk.activeAdjustments.some((a) => a.includes('Sleep'))).toBe(false);
   });
 
   it('intensive exercise delays the cycle and appears in activeAdjustments', () => {
     const insights = { ...emptyInsights(), intensiveExerciseDays: 4 };
     const r = BayesianPredictionEngine.predict([], [], LAST_PERIOD, insights);
     expect(r.predictedCycleLength).toBeGreaterThan(28);
-    expect(r.activeAdjustments.some(a => a.includes('Intensive activity') || a.includes('activity'))).toBe(true);
+    expect(r.activeAdjustments.some((a) => a.includes('Intensive activity') || a.includes('activity'))).toBe(true);
   });
 
   it('egg-white cervical mucus (EWCM) shortens the prediction', () => {
@@ -205,7 +205,7 @@ describe('BayesianPredictionEngine — daily log adjustments', () => {
     const ewcm = { ...emptyInsights(), eggWhiteMucusDays: 2 };
     const r = BayesianPredictionEngine.predict([], [], LAST_PERIOD, ewcm);
     expect(r.predictedCycleLength).toBeLessThanOrEqual(base.predictedCycleLength);
-    expect(r.activeAdjustments.some(a => a.toLowerCase().includes('mucus') || a.toLowerCase().includes('fertile'))).toBe(true);
+    expect(r.activeAdjustments.some((a) => a.toLowerCase().includes('mucus') || a.toLowerCase().includes('fertile'))).toBe(true);
   });
 
   it('BBT shift overrides formula ovulation date and is reflected in bbtConfirmedOvulationDate', () => {
@@ -224,7 +224,9 @@ describe('BayesianPredictionEngine — daily log adjustments', () => {
 
     expect(r.bbtConfirmedOvulationDate).not.toBeNull();
     expect(r.ovulationDate.getTime()).toBe(bbtDate.getTime());
-    expect(r.activeAdjustments.some(a => a.includes('BBT') || a.includes('bbt') || a.toLowerCase().includes('ovulation'))).toBe(true);
+    expect(r.activeAdjustments.some((a) => a.includes('BBT') || a.includes('bbt') || a.toLowerCase().includes('ovulation'))).toBe(
+      true,
+    );
   });
 
   it('BBT shift outside the current cycle window is ignored', () => {
@@ -297,9 +299,9 @@ describe('BayesianPredictionEngine — roll-forward anchoring', () => {
   it('nextPeriodDate is always in the future regardless of last period date', () => {
     const today = todayMidnight();
     const cases = [
-      addDays(today, -10),   // recent
-      addDays(today, -200),  // very stale
-      addDays(today, 0),     // today
+      addDays(today, -10), // recent
+      addDays(today, -200), // very stale
+      addDays(today, 0), // today
     ];
     for (const last of cases) {
       const r = BayesianPredictionEngine.predict([], [], last);

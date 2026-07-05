@@ -51,4 +51,13 @@ export class GlobalConfigService {
       from: this.env.SMTP_FROM,
     };
   }
+
+  get firebase() {
+    return {
+      projectId: this.env.FIREBASE_PROJECT_ID,
+      clientEmail: this.env.FIREBASE_CLIENT_EMAIL,
+      // .env files can't hold real newlines, so the key is stored with `\n` escaped.
+      privateKey: this.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    };
+  }
 }

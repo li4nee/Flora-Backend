@@ -19,6 +19,10 @@ export const envSchema = z.object({
   SMTP_USER: z.string(),
   SMTP_PASSWORD: z.string(),
   SMTP_FROM: z.string().default('Flora <noreply@flora.app>'),
+
+  FIREBASE_PROJECT_ID: z.string(),
+  FIREBASE_CLIENT_EMAIL: z.string(),
+  FIREBASE_PRIVATE_KEY: z.string(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

@@ -8,5 +8,6 @@ import { DailyLogsAndSymptomsModule } from '../daily-logs-symptoms/daily-logs-sy
   imports: [PeriodCyclesModule, DailyLogsAndSymptomsModule],
   providers: [PredictionsService],
   controllers: [PredictionsController],
+  exports: [PredictionsService],
 })
 export class PredictionsModule {}
