@@ -41,4 +41,14 @@ export class GlobalConfigService {
       refreshTokenSecret: this.env.JWT_REFRESH_SECRET,
     };
   }
+
+  get smtp() {
+    return {
+      host: this.env.SMTP_HOST,
+      port: parseInt(this.env.SMTP_PORT, 10),
+      user: this.env.SMTP_USER,
+      password: this.env.SMTP_PASSWORD,
+      from: this.env.SMTP_FROM,
+    };
+  }
 }

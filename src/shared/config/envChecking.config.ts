@@ -13,6 +13,12 @@ export const envSchema = z.object({
   JWT_EXPIRES_IN: z.string(),
   JWT_REFRESH_SECRET: z.string(),
   JWT_REFRESH_EXPIRES_IN: z.string(),
+
+  SMTP_HOST: z.string(),
+  SMTP_PORT: z.string().default('587'),
+  SMTP_USER: z.string(),
+  SMTP_PASSWORD: z.string(),
+  SMTP_FROM: z.string().default('Flora <noreply@flora.app>'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

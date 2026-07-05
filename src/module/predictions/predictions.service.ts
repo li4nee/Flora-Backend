@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PeriodCyclesService } from '../period-cycles/period-cycles.service';
 import { DailyLogsAndSymptomsService } from '../daily-logs-symptoms/daily-logs-symptoms.service';
-import { CyclePredictionEngine, CycleData } from './cyclePredictionEngine';
+import { BayesianPredictionEngine } from './bayesianPredictionEngine';
+import { CycleData } from './cyclePredictionEngine';
 
 @Injectable()
 export class PredictionsService {
@@ -16,7 +17,7 @@ export class PredictionsService {
 
     if (cycles.length === 0) {
       // No cycles at all → engine will use a safe 28-day default
-      return CyclePredictionEngine.predict(
+      return BayesianPredictionEngine.predict(
         [],
         [],
         new Date(), // anchor to today — the engine will use DEFAULT_CYCLE_LENGTH
@@ -41,10 +42,8 @@ export class PredictionsService {
       .reverse(); // engine expects oldest → newest
 
     // Fetch daily log insights anchored to the last LOGGED period start.
-    // The engine itself will roll the anchor forward to today — we just need
-    // any lifestyle signals the user logged around their last recorded cycle.
     const insights = await this.dailyLogsService.getInsightsForCycle(userId, new Date(lastPeriod.startDate));
 
-    return CyclePredictionEngine.predict(formattedCycles, [], new Date(lastPeriod.startDate), insights);
+    return BayesianPredictionEngine.predict(formattedCycles, insights.topSymptoms, new Date(lastPeriod.startDate), insights);
   }
 }
