@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthRegisterDto } from './dto/registerUser.dto';
 import { AuthLoginDto } from './dto/loginUser.dto';
-import { InvalidInputError, PermissionNotGrantedError, UnauthorizedError } from '../../shared/typings/error.typings';
+import { EmailNotVerifiedError, InvalidInputError, PermissionNotGrantedError, UnauthorizedError } from '../../shared/typings/error.typings';
 import { UserService } from '../user/user.service';
 import { PasswordUtils } from '../../shared/utils/password.utils';
 import { GlobalConfigService } from '../../shared/config/global.config';
@@ -37,10 +37,19 @@ export class AuthService {
   async register(body: AuthRegisterDto): Promise<{ message: string }> {
     const { email, password, profile } = body;
 
-    const existingUser = await this.userService.userExistsByEmail(email);
+    const existingUser = await this.userService.findByEmail(email);
 
     if (existingUser) {
-      throw new InvalidInputError('Email already registered');
+      if (existingUser.isEmailVerified) {
+        throw new InvalidInputError('Email already registered');
+      }
+
+      await this.invalidateAllEmailTokens(existingUser.id, 'verify');
+      await this.sendVerificationEmail(existingUser.id, email);
+
+      return {
+        message: 'Account already exists but is not verified. A new verification code has been sent to your email.',
+      };
     }
 
     const hashedPassword = await this.passwordUtils.hashPassword(password);
@@ -77,7 +86,7 @@ export class AuthService {
     const isEmailVerified = user?.isEmailVerified ?? false;
 
     if (!isEmailVerified) {
-      throw new PermissionNotGrantedError('Email not verified. Please verify your email before logging in.');
+      throw new EmailNotVerifiedError('Email not verified. Please verify your email before logging in.');
     }
 
     const accessToken = this.createAccessToken(user.id);
