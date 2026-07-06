@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BaseResponseDto } from 'src/shared/dto/baseResponse.dto';
+import { BaseResponseDto } from '../../../shared/dto/baseResponse.dto';
 
 class PredictedCycleStatusDto {
   @ApiProperty({ example: 31, description: 'Predicted cycle length in days' })

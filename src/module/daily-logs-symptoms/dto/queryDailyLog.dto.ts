@@ -1,8 +1,8 @@
 import { IsDateString, IsEnum, IsOptional, IsInt, Min, Max, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { PaginationDto } from 'src/shared/dto/pagination.dto';
-import { SEVERITY, SortOrder } from 'src/shared/typings/base.typings';
+import { PaginationDto } from '../../../shared/dto/pagination.dto';
+import { SEVERITY, SortOrder } from '../../../shared/typings/base.typings';
 import { CervicalMucusType } from '../entities/dailyLogs.entity';
 import { SymptomType } from '../entities/dailySymptoms.entity';
 

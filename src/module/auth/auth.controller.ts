@@ -5,7 +5,7 @@ import { AuthLoginDto } from './dto/loginUser.dto';
 import { JwtAuthGuard } from './guards/jwtAuth.guard';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RefreshTokenDto } from './dto/refreshToken.dto';
-import { CurrentUserId } from 'src/shared/decorators/currentUserId.decorators';
+import { CurrentUserId } from '../../shared/decorators/currentUserId.decorators';
 import { VerifyEmailDto } from './dto/verifyEmail.dto';
 import { ResendVerificationDto } from './dto/resendVerification.dto';
 import { ForgotPasswordDto } from './dto/forgotPassword.dto';

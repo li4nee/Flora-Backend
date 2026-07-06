@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwtAuth.guard';
-import { CurrentUserId } from 'src/shared/decorators/currentUserId.decorators';
+import { CurrentUserId } from '../../shared/decorators/currentUserId.decorators';
 import { NotificationsService } from './notifications.service';
 import { RegisterDeviceTokenDto, UnregisterDeviceTokenDto } from './dto/device-token.dto';
 
