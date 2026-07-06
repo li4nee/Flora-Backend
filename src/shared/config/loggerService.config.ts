@@ -9,6 +9,10 @@ export class LoggerService {
   private readonly logger: winston.Logger;
 
   constructor(private readonly config: GlobalConfigService) {
+    // Vercel's serverless filesystem is read-only outside /tmp, and its own
+    // console log capture makes file rotation redundant there anyway.
+    const canWriteLogFiles = !process.env.VERCEL;
+
     this.logger = winston.createLogger({
       level: config.app.nodeEnv === 'production' ? 'info' : 'debug',
       format: winston.format.combine(
@@ -23,22 +27,26 @@ export class LoggerService {
       ),
       transports: [
         new winston.transports.Console(),
-        new winston.transports.DailyRotateFile({
-          dirname: 'logs',
-          filename: 'app-%DATE%.log',
-          datePattern: 'YYYY-MM-DD',
-          maxFiles: '14d',
-          level: 'info',
-          zippedArchive: true,
-        }),
-        new winston.transports.DailyRotateFile({
-          dirname: 'logs',
-          filename: 'error-%DATE%.log',
-          datePattern: 'YYYY-MM-DD',
-          maxFiles: '30d',
-          level: 'error',
-          zippedArchive: true,
-        }),
+        ...(canWriteLogFiles
+          ? [
+              new winston.transports.DailyRotateFile({
+                dirname: 'logs',
+                filename: 'app-%DATE%.log',
+                datePattern: 'YYYY-MM-DD',
+                maxFiles: '14d',
+                level: 'info',
+                zippedArchive: true,
+              }),
+              new winston.transports.DailyRotateFile({
+                dirname: 'logs',
+                filename: 'error-%DATE%.log',
+                datePattern: 'YYYY-MM-DD',
+                maxFiles: '30d',
+                level: 'error',
+                zippedArchive: true,
+              }),
+            ]
+          : []),
       ],
     });
   }
