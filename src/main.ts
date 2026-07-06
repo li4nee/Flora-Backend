@@ -30,17 +30,16 @@ async function bootstrap() {
   );
 
   app.setGlobalPrefix('/api/v1');
-  if (config.app.nodeEnv !== 'production') {
-    const swaggerConfig = new DocumentBuilder()
-      .setTitle('Flora API')
-      .setDescription('Flora API docs')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('/docs', app, document);
-    logger.info('Swagger docs available at /docs');
-  }
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Flora API')
+    .setDescription('Flora API docs')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('/docs', app, document);
+  logger.info('Swagger docs available at /docs');
+
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.enableShutdownHooks();
