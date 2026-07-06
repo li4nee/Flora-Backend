@@ -30,6 +30,7 @@ export class GlobalConfigService {
       username: this.env.POSTGRES_USER,
       password: this.env.POSTGRES_PASSWORD,
       database: this.env.POSTGRES_DB,
+      ssl: this.env.POSTGRES_SSL,
     };
   }
 
