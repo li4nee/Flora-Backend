@@ -14,7 +14,18 @@ async function bootstrap() {
   const config = app.get(GlobalConfigService);
   const logger = app.get(LoggerService);
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          // Swagger UI loads its bundle from a CDN and runs an inline init script.
+          'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+          'style-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+        },
+      },
+    }),
+  );
   // app.use(cookieParser());
 
   app.enableCors({
