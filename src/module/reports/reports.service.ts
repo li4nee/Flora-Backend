@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PeriodCyclesService } from '../period-cycles/period-cycles.service';
 import { DailyLogsAndSymptomsService } from '../daily-logs-symptoms/daily-logs-symptoms.service';
-import { mean, stdDev } from 'src/shared/utils/base.utils';
+import { mean, stdDev } from '../../shared/utils/base.utils';
 import { CycleData } from '../predictions/cyclePredictionEngine';
 import { BayesianPredictionEngine } from '../predictions/bayesianPredictionEngine';
 import { format } from 'date-fns';

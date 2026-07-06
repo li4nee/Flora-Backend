@@ -12,7 +12,7 @@
  * - De Souza et al. (2010): Intensive exercise impacts on follicular phase.
  */
 
-import { addDays, mean, stdDev } from 'src/shared/utils/base.utils';
+import { addDays, mean, stdDev } from '../../shared/utils/base.utils';
 import { DailyLogInsights } from '../daily-logs-symptoms/daily-logs-symptoms.service';
 import { PredictionResult, CycleData, SymptomData, ConfidenceLevel } from './cyclePredictionEngine';
 

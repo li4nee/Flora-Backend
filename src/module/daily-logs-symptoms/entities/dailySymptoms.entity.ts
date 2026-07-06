@@ -1,7 +1,7 @@
-import { GlobalEntity } from 'src/shared/db/globalEntity';
+import { GlobalEntity } from '../../../shared/db/globalEntity';
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { DailyLog } from './dailyLogs.entity';
-import { SEVERITY } from 'src/shared/typings/base.typings';
+import { SEVERITY } from '../../../shared/typings/base.typings';
 
 /**
  * SymptomType enum categorizes common menstrual symptoms, facilitating consistent tracking:

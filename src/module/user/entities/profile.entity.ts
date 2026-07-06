@@ -1,6 +1,6 @@
 import { Column, Entity, OneToOne } from 'typeorm';
 import { User } from './user.entity';
-import { GlobalEntity } from 'src/shared/db/globalEntity';
+import { GlobalEntity } from '../../../shared/db/globalEntity';
 
 /**
  * @extends GlobalEntity

@@ -6,8 +6,8 @@ import { format } from 'date-fns';
 import { Notification } from './entities/notifications.entity';
 import { DeviceToken } from './entities/deviceToken.entity';
 import { RegisterDeviceTokenDto } from './dto/device-token.dto';
-import { PushNotificationService, PushNotificationPayload } from 'src/shared/utils/pushNotification.utils';
-import { LoggerService } from 'src/shared/config/loggerService.config';
+import { PushNotificationService, PushNotificationPayload } from '../../shared/utils/pushNotification.utils';
+import { LoggerService } from '../../shared/config/loggerService.config';
 import { PredictionsService } from '../predictions/predictions.service';
 import { DailyLogsAndSymptomsService } from '../daily-logs-symptoms/daily-logs-symptoms.service';
 

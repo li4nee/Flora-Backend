@@ -14,7 +14,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SEVERITY } from 'src/shared/typings/base.typings';
+import { SEVERITY } from '../../../shared/typings/base.typings';
 import { CervicalMucusType } from '../entities/dailyLogs.entity';
 import { SymptomType } from '../entities/dailySymptoms.entity';
 
