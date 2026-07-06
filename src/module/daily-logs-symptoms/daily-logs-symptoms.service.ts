@@ -4,7 +4,7 @@ import { CervicalMucusType, DailyLog } from './entities/dailyLogs.entity';
 import { DailySymptom } from './entities/dailySymptoms.entity';
 import { PeriodCycles } from '../period-cycles/entities/periodCycles.entity';
 import { Between, Repository } from 'typeorm';
-import { InvalidInputError } from 'src/shared/typings/error.typings';
+import { InvalidInputError } from '../../shared/typings/error.typings';
 import { DailyLogCreateDto, DailyLogSymptomCreateDto } from './dto/createDailyLog.dto';
 import { PeriodCyclesService } from '../period-cycles/period-cycles.service';
 import { differenceInDays, format, subDays } from 'date-fns';

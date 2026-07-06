@@ -2,7 +2,7 @@ import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/guards/jwtAuth.guard';
-import { CurrentUserId } from 'src/shared/decorators/currentUserId.decorators';
+import { CurrentUserId } from '../../shared/decorators/currentUserId.decorators';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ReportResponseDto } from './dto/reportResponse.dto';
 
