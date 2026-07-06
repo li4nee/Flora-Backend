@@ -37,7 +37,16 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('/docs', app, document);
+  // Serverless deployments (Vercel) can drop swagger-ui-dist's static assets
+  // from the bundle since they're read from disk rather than require()'d, so
+  // point the UI at CDN copies instead of relying on local static serving.
+  SwaggerModule.setup('/docs', app, document, {
+    customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.4/swagger-ui.css',
+    customJs: [
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.4/swagger-ui-bundle.js',
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.4/swagger-ui-standalone-preset.js',
+    ],
+  });
   logger.info('Swagger docs available at /docs');
 
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
