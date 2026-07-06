@@ -18,7 +18,7 @@
  * never to a stale past date.
  */
 
-import { addDays, mean, stdDev } from 'src/shared/utils/base.utils';
+import { addDays, mean, stdDev } from '../../shared/utils/base.utils';
 import { DailyLogInsights } from '../daily-logs-symptoms/daily-logs-symptoms.service';
 
 export interface CycleData {

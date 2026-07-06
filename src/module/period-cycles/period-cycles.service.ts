@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PeriodCycles } from './entities/periodCycles.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
-import { InvalidInputError } from 'src/shared/typings/error.typings';
+import { InvalidInputError } from '../../shared/typings/error.typings';
 import { PeriodCycleHistoryGetDto } from './dto/periodCycleHistoryGet.dto';
 import { PeriodCycleStartLogDto } from './dto/periodCycleStart.dto';
 import { parseISO } from 'date-fns/parseISO';

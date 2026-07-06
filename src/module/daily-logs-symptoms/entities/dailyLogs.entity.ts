@@ -1,9 +1,9 @@
-import { User } from 'src/module/user/entities/user.entity';
-import { GlobalEntity } from 'src/shared/db/globalEntity';
+import { User } from '../../user/entities/user.entity';
+import { GlobalEntity } from '../../../shared/db/globalEntity';
 import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
 import { DailySymptom } from './dailySymptoms.entity';
-import { PeriodCycles } from 'src/module/period-cycles/entities/periodCycles.entity';
-import { SEVERITY } from 'src/shared/typings/base.typings';
+import { PeriodCycles } from '../../period-cycles/entities/periodCycles.entity';
+import { SEVERITY } from '../../../shared/typings/base.typings';
 
 /**
  * CervicalMucus consistency - key fertility indicator.

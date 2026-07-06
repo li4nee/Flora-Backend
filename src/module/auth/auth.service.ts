@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthRegisterDto } from './dto/registerUser.dto';
 import { AuthLoginDto } from './dto/loginUser.dto';
-import { InvalidInputError, PermissionNotGrantedError, UnauthorizedError } from 'src/shared/typings/error.typings';
+import { InvalidInputError, PermissionNotGrantedError, UnauthorizedError } from '../../shared/typings/error.typings';
 import { UserService } from '../user/user.service';
-import { PasswordUtils } from 'src/shared/utils/password.utils';
-import { GlobalConfigService } from 'src/shared/config/global.config';
+import { PasswordUtils } from '../../shared/utils/password.utils';
+import { GlobalConfigService } from '../../shared/config/global.config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshToken } from './entities/refreshToken.entity';
 import { EmailToken } from './entities/emailToken.entity';
@@ -13,8 +13,8 @@ import { LessThan, MoreThan, Repository, UpdateResult } from 'typeorm';
 import { StringValue } from 'ms';
 import { RefreshTokenDto } from './dto/refreshToken.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { LoggerService } from 'src/shared/config/loggerService.config';
-import { EmailService } from 'src/shared/utils/email.utils';
+import { LoggerService } from '../../shared/config/loggerService.config';
+import { EmailService } from '../../shared/utils/email.utils';
 import * as crypto from 'crypto';
 
 @Injectable()

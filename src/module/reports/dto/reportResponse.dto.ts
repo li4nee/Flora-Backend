@@ -111,7 +111,7 @@ class ReportResponseDtoData {
   dataStatus: DataStatusDto;
 }
 
-import { BaseResponseDto } from 'src/shared/dto/baseResponse.dto';
+import { BaseResponseDto } from '../../../shared/dto/baseResponse.dto';
 
 export class ReportResponseDto extends BaseResponseDto {
   @ApiProperty({ type: ReportResponseDtoData })
