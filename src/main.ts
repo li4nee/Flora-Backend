@@ -78,7 +78,5 @@ bootstrap()
   });
 
 // Things left to do in here :
-// Add Rate limiting
-// Add graceful shutdown hooks for cleanup on app termination
 // Add CORS configuration
 // Add endpoints for health checks and metrics

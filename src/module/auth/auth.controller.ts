@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AuthRegisterDto } from './dto/registerUser.dto';
 import { AuthLoginDto } from './dto/loginUser.dto';
@@ -17,6 +18,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Register a new user (sends verification email)' })
   @ApiBody({ type: AuthRegisterDto })
   async register(@Body() body: AuthRegisterDto) {
@@ -25,6 +27,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Login user' })
   @ApiBody({ type: AuthLoginDto })
   async login(@Body() body: AuthLoginDto) {
@@ -33,6 +36,7 @@ export class AuthController {
   }
 
   @Post('verify-email')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Verify email address with OTP' })
   @ApiBody({ type: VerifyEmailDto })
   async verifyEmail(@Body() body: VerifyEmailDto) {
@@ -40,6 +44,7 @@ export class AuthController {
   }
 
   @Post('resend-verification')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({ summary: 'Resend verification email with a new OTP' })
   @ApiBody({ type: ResendVerificationDto })
   async resendVerification(@Body() body: ResendVerificationDto) {
@@ -47,6 +52,7 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({ summary: 'Request a password reset OTP via email' })
   @ApiBody({ type: ForgotPasswordDto })
   async forgotPassword(@Body() body: ForgotPasswordDto) {
@@ -54,6 +60,7 @@ export class AuthController {
   }
 
   @Post('reset-password')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Reset password using OTP' })
   @ApiBody({ type: ResetPasswordDto })
   async resetPassword(@Body() body: ResetPasswordDto) {
