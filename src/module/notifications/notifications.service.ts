@@ -73,6 +73,50 @@ export class NotificationsService {
   }
 
   /**
+   * Sends a prediction push to the current user's registered devices on demand,
+   * bypassing the reminder-time/settings gating of the hourly cron. Intended for
+   * manual testing of the end-to-end FCM path from a button in the app.
+   *
+   * Uses the user's real prediction data so the notification mirrors what the
+   * cron would eventually send.
+   */
+  async sendTestPredictionNotification(
+    userId: string,
+  ): Promise<{ sent: boolean; deviceCount: number; message: string }> {
+    const deviceTokens = await this.deviceTokenRepo.find({ where: { user: { id: userId } } });
+
+    if (deviceTokens.length === 0) {
+      return {
+        sent: false,
+        deviceCount: 0,
+        message: 'No device tokens registered for this user — open the app on a device first.',
+      };
+    }
+
+    const prediction = await this.predictionsService.getPredictionForUser(userId);
+    const days = prediction?.daysUntilNextPeriod;
+
+    let body: string;
+    if (days == null) {
+      body = 'Your period prediction is being calculated. Keep logging your cycles!';
+    } else if (days <= 0) {
+      body = 'Your period is expected to start today.';
+    } else if (days === 1) {
+      body = 'Your next period is expected to start tomorrow.';
+    } else {
+      body = `Your next period is expected in ${days} days.`;
+    }
+
+    await this.sendToUser(userId, {
+      title: '🌸 Period Prediction',
+      body,
+      data: { type: 'prediction', test: 'true' },
+    });
+
+    return { sent: true, deviceCount: deviceTokens.length, message: body };
+  }
+
+  /**
    * Runs once per hour. Each user's reminder only matches their configured hour once
    * every 24 hours, so a user is notified at most once per day per notification type
    * without needing separate "already sent today" bookkeeping.
