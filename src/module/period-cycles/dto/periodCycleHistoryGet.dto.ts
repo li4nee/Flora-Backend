@@ -1,8 +1,8 @@
 import { IsOptional, IsInt, IsDateString, IsString, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
-import { PaginationDto } from 'src/shared/dto/pagination.dto';
-import { SortOrder } from 'src/shared/typings/base.typings';
+import { PaginationDto } from '../../../shared/dto/pagination.dto';
+import { SortOrder } from '../../../shared/typings/base.typings';
 
 export class PeriodCycleFilterDto {
   @ApiPropertyOptional()

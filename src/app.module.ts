@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { SharedModule } from './shared/shared.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfig } from './shared/config/typeOrm.config';
@@ -13,6 +15,12 @@ import { DailyLogsAndSymptomsModule } from './module/daily-logs-symptoms/daily-l
 @Module({
   imports: [
     SharedModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     TypeOrmModule.forRootAsync(TypeOrmConfig.getOrmConfig()),
     AuthModule,
     UserModule,
@@ -21,6 +29,12 @@ import { DailyLogsAndSymptomsModule } from './module/daily-logs-symptoms/daily-l
     DailyLogsAndSymptomsModule,
     PeriodCyclesModule,
     NotificationsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

@@ -12,11 +12,11 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { DailyLogsAndSymptomsService } from './daily-logs-symptoms.service';
-import { CurrentUserId } from 'src/shared/decorators/currentUserId.decorators';
+import { CurrentUserId } from '../../shared/decorators/currentUserId.decorators';
 import { DailyLogCreateDto } from './dto/createDailyLog.dto';
 import { DailyLogQueryDto } from './dto/queryDailyLog.dto';
 import { DailyLogUpdateDto } from './dto/updateDailyLog.dto';
-import { InvalidInputError } from 'src/shared/typings/error.typings';
+import { InvalidInputError } from '../../shared/typings/error.typings';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Daily Logs')

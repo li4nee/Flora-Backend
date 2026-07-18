@@ -14,7 +14,18 @@ async function bootstrap() {
   const config = app.get(GlobalConfigService);
   const logger = app.get(LoggerService);
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          // Swagger UI loads its bundle from a CDN and runs an inline init script.
+          'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+          'style-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+        },
+      },
+    }),
+  );
   // app.use(cookieParser());
 
   app.enableCors({
@@ -30,17 +41,25 @@ async function bootstrap() {
   );
 
   app.setGlobalPrefix('/api/v1');
-  if (config.app.nodeEnv !== 'production') {
-    const swaggerConfig = new DocumentBuilder()
-      .setTitle('Flora API')
-      .setDescription('Flora API docs')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('/docs', app, document);
-    logger.info('Swagger docs available at /docs');
-  }
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Flora API')
+    .setDescription('Flora API docs')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  // Serverless deployments (Vercel) can drop swagger-ui-dist's static assets
+  // from the bundle since they're read from disk rather than require()'d, so
+  // point the UI at CDN copies instead of relying on local static serving.
+  SwaggerModule.setup('/docs', app, document, {
+    customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.4/swagger-ui.css',
+    customJs: [
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.4/swagger-ui-bundle.js',
+      'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.4/swagger-ui-standalone-preset.js',
+    ],
+  });
+  logger.info('Swagger docs available at /docs');
+
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.enableShutdownHooks();
@@ -59,7 +78,5 @@ bootstrap()
   });
 
 // Things left to do in here :
-// Add Rate limiting
-// Add graceful shutdown hooks for cleanup on app termination
 // Add CORS configuration
 // Add endpoints for health checks and metrics

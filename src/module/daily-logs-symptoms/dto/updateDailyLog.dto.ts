@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { SEVERITY } from 'src/shared/typings/base.typings';
+import { SEVERITY } from '../../../shared/typings/base.typings';
 import { CervicalMucusType } from '../entities/dailyLogs.entity';
 import { DailyLogSymptomCreateDto } from './createDailyLog.dto';
 

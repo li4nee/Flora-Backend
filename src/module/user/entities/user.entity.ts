@@ -1,7 +1,7 @@
-import { GlobalEntity } from 'src/shared/db/globalEntity';
+import { GlobalEntity } from '../../../shared/db/globalEntity';
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { Profile } from './profile.entity';
-import { Notification } from 'src/module/notifications/entities/notifications.entity';
+import { Notification } from '../../notifications/entities/notifications.entity';
 
 /**
  * @extends GlobalEntity
