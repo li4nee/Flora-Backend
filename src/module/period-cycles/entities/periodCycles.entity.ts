@@ -1,5 +1,5 @@
-import { User } from 'src/module/user/entities/user.entity';
-import { GlobalEntity } from 'src/shared/db/globalEntity';
+import { User } from '../../user/entities/user.entity';
+import { GlobalEntity } from '../../../shared/db/globalEntity';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
 
 /**

@@ -7,6 +7,7 @@ export enum ErrorMessage {
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
   UNAUTHORIZED = 'UNAUTHORIZED',
+  EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED',
 }
 
 export enum ErrorHttpStatusCode {
@@ -32,6 +33,12 @@ export abstract class CustomError extends HttpException {
 export class InvalidInputError extends CustomError {
   constructor(message = 'Invalid input') {
     super(message, ErrorHttpStatusCode.INVALID_INPUT, ErrorMessage.INVALID_INPUT);
+  }
+}
+
+export class EmailNotVerifiedError extends CustomError {
+  constructor(message = 'Email not verified') {
+    super(message, ErrorHttpStatusCode.UNAUTHORIZED, ErrorMessage.EMAIL_NOT_VERIFIED);
   }
 }
 

@@ -19,6 +19,7 @@ export class TypeOrmConfig {
           username: db.username,
           password: db.password,
           database: db.database,
+          ssl: db.ssl ? { rejectUnauthorized: false } : false,
           synchronize: config.app.nodeEnv !== 'production',
           logging: config.app.nodeEnv !== 'production',
           autoLoadEntities: true,
