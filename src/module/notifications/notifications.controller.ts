@@ -25,4 +25,12 @@ export class NotificationsController {
     await this.notificationsService.unregisterDeviceToken(userId, dto.token);
     return { message: 'Device token unregistered successfully' };
   }
+
+  @Post('test-prediction')
+  @ApiOperation({
+    summary: "Send a test prediction push to the current user's registered devices (debug/testing)",
+  })
+  async sendTestPrediction(@CurrentUserId() userId: string) {
+    return this.notificationsService.sendTestPredictionNotification(userId);
+  }
 }
