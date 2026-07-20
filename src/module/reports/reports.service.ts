@@ -49,6 +49,7 @@ export class ReportsService {
       .map((c) => ({
         length: c.cycleLength!,
         startDate: new Date(c.startDate),
+        periodLength: c.periodLength ?? undefined,
       }))
       .slice()
       .reverse();

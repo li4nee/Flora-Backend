@@ -37,6 +37,7 @@ export class PredictionsService {
       .map((c) => ({
         length: c.cycleLength!,
         startDate: new Date(c.startDate),
+        periodLength: c.periodLength ?? undefined,
       }))
       .slice() // defensive copy before reversing
       .reverse(); // engine expects oldest → newest

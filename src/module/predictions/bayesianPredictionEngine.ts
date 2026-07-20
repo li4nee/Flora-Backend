@@ -103,7 +103,15 @@ export class BayesianPredictionEngine {
     const { confidence, confidenceNote } = this.evaluateCertainty(validLengths.length, posteriorVar, estimatedCyclesForward);
 
     // ── Step 7: Frontend Lifecycle Fields ────────────────────────────────────
-    const frontendFields = this.computeFrontendFields(today, currentCycleStart, predicted, ovulationDate, nextPeriodDate);
+    const periodLength = this.averagePeriodLength(cycles);
+    const frontendFields = this.computeFrontendFields(
+      today,
+      currentCycleStart,
+      predicted,
+      ovulationDate,
+      nextPeriodDate,
+      periodLength,
+    );
 
     const isIrregular = validLengths.length > 3 ? stdDev(validLengths, mean(validLengths)) > 7 : false;
 
@@ -234,9 +242,16 @@ export class BayesianPredictionEngine {
 
   private static calculateOvulationDate(start: Date, length: number, insights?: DailyLogInsights): Date {
     if (insights?.bbtShiftDetected && insights.bbtShiftDate) {
-      return insights.bbtShiftDate;
+      const normalized = new Date(insights.bbtShiftDate);
+      normalized.setHours(0, 0, 0, 0);
+      return normalized;
     }
     return addDays(start, length - 14);
+  }
+
+  private static averagePeriodLength(cycles: CycleData[]): number {
+    const lengths = cycles.map((c) => c.periodLength).filter((l): l is number => l != null && l > 0);
+    return lengths.length > 0 ? mean(lengths) : DEFAULT_PERIOD_LENGTH;
   }
 
   private static rollForward(anchor: Date, len: number, today: Date) {
@@ -250,14 +265,21 @@ export class BayesianPredictionEngine {
     return { currentCycleStart, estimatedCyclesForward };
   }
 
-  private static computeFrontendFields(today: Date, start: Date, len: number, ovulation: Date, next: Date) {
+  private static computeFrontendFields(
+    today: Date,
+    start: Date,
+    len: number,
+    ovulation: Date,
+    next: Date,
+    periodLength: number,
+  ) {
     const msPerDay = 86400000;
     const rawDay = Math.floor((today.getTime() - start.getTime()) / msPerDay);
     const currentCycleDay = Math.max(1, Math.min(len, rawDay + 1));
     const cycleProgress = Math.min(100, Math.round((currentCycleDay / len) * 100));
     const daysUntilNextPeriod = Math.max(0, Math.floor((next.getTime() - today.getTime()) / msPerDay));
 
-    const isInMenstrualPhase = currentCycleDay <= DEFAULT_PERIOD_LENGTH;
+    const isInMenstrualPhase = currentCycleDay <= periodLength;
     const isOvulationDay = today.getTime() === ovulation.getTime();
     const fertileStart = addDays(ovulation, -5);
     const fertileEnd = addDays(ovulation, 1);

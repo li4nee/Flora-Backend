@@ -24,6 +24,7 @@ import { DailyLogInsights } from '../daily-logs-symptoms/daily-logs-symptoms.ser
 export interface CycleData {
   length: number; // cycle length in days (must be > 0)
   startDate: Date;
+  periodLength?: number; // bleed duration in days, if logged
 }
 
 export interface SymptomData {
