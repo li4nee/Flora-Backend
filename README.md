@@ -30,32 +30,60 @@ Flora helps people record period cycles, symptoms, and daily wellbeing signals, 
 - **Reminders:** register device tokens for Firebase push notifications and configure period, fertility, and daily logging reminders.
 - **API documentation:** Swagger UI for exploring the endpoints and request schemas.
 
-## How we approached the project
+## Project study and method
 
-The design question for this first version was: **how can a tracker provide a useful, understandable estimate when a person has only a small or incomplete history?** A fixed calendar rule that assumes every cycle lasts 28 days cannot reflect the variation people actually log.
+The FYP asks a product and engineering question: **how can a cycle tracker produce a useful, understandable estimate when personal history is short, incomplete, or irregular?** A fixed calendar that assumes every cycle is 28 days is easy to implement, but it does not reflect variation seen in real-world cycle data.
 
-We used a research-informed software design process:
+The work represented in this repository is a **literature-informed software prototype**, carried out in four steps:
 
-1. **Identify the information a tracker can collect.** Cycle start dates provide the main personal history; symptoms and daily logs add context such as stress, sleep, exercise, cervical mucus, and temperature.
-2. **Review relevant published work.** Research on real-world cycle variability and studies of stress and reproductive function informed the problem framing. These papers provide context; they do not validate Flora's coefficients or predictions.
-3. **Turn the design into explicit calculations.** The current engine combines a population prior with an individual's recent cycle history, then applies small, visible adjustments for selected logged signals.
-4. **Handle missing and stale logs deliberately.** The engine returns a conservative estimate when no cycle history exists, lowers confidence when data is limited, and rolls an old cycle date forward instead of presenting a prediction anchored in the past.
-5. **Build the surrounding product API.** Authentication, private user records, cycle and daily-log endpoints, reports, and notifications make the prediction available as part of a usable tracking service.
+1. **Model the tracking problem.** Store period start/end dates and daily observations so the prediction can use the person's own recent history and optional context.
+2. **Review research relevant to the signals and prediction problem.** We used studies of real-world cycle variability, tracking adherence, stress, sleep, and exercise to frame what can vary and what data a tracker might collect.
+3. **Implement an explainable baseline.** Combine a fixed prior with recent per-user cycle history, add small explicit rules for selected logged signals, and return both a date estimate and a confidence category.
+4. **Check implementation behavior.** Unit tests exercise prior fallback, movement toward personal history, bounds, adjustments, and date roll-forward. These are software tests; they are not a user study or evidence of clinical accuracy.
 
-### What the current prediction does
+No participant recruitment, survey, clinical measurement, original health-data collection, prospective trial, or prediction-accuracy study is documented in this repository. Flora therefore uses published work as **background and design rationale**; it does not claim to reproduce those studies or to have validated the current model.
 
-The API uses the most recent **up to 12 logged cycles**. The Bayesian engine starts with a fixed prior configured as a mean of **28.1 days** and standard deviation of **5.2 days**, then combines it with the person's observed cycle lengths. These constants are implementation defaults, not values estimated from Flora users. The engine adds explicit symptom and daily-log adjustments, rounds and bounds the estimate to 21–45 days, and derives cycle dates and phases from it.
+## Research used and how it maps to Flora
 
-When available, a basal-temperature shift can confirm an ovulation date in the current cycle. The engine also reports confidence based on the amount of usable history and how many cycles have been estimated forward. Confidence is a product heuristic, not a clinically calibrated probability.
+The sources below informed the design decisions. The distinction between a study finding and Flora's implementation matters: the published studies did not test Flora, and their findings do not validate Flora's hard-coded adjustment weights.
+
+| Research | What the researchers studied | How it informed this prototype | What it does **not** establish for Flora |
+|---|---|---|---|
+| **Bull et al. (2019), cycle variability** | Analyzed 612,613 ovulatory cycles from 124,648 users of a fertility app. The study reported a mean cycle length of 29.3 days and variation by age and BMI, among other cycle characteristics. | Motivates tracking each person's history and not treating one calendar length as universal. | It does not provide a validation set for Flora or prove that Flora's prior constants are right for its users. Its dataset was a particular app cohort and included cycles where ovulation was detected. |
+| **Schliep et al. (2015), daily stress and reproductive function** | Followed 259 healthy women aged 18–44 for up to two cycles in the BioCycle Study. High versus low daily stress was associated with higher odds of sporadic anovulation (adjusted OR 2.2; 95% CI 1.0–4.7) and differences in reproductive hormone levels. | Supports collecting recent stress as contextual information and treating it as a possible correlate, not as a diagnosis. | The paper did not establish a universal delay in cycle length of 0.45 days per stress day. Flora's stress multiplier and 2.5-day cap are prototype rules, not effect sizes from the paper. |
+| **Kim et al. (2018), sleep and irregularity** | A cross-sectional population study of 4,445 Korean women aged 19–49. Short sleep (≤5 hours/day) was associated with higher odds of severe irregularity, defined as a menstrual interval over three months (OR 2.67; 95% CI 1.35–5.27). | Gives a reason to let users record sleep and motivates further investigation of sleep/cycle associations. | It does not show that every hour below seven hours shifts the next period by 0.35 days. Flora's linear sleep adjustment is a prototype assumption, not the study's result. |
+| **Jeon & Baek (2023), sleep review** | Systematically reviewed published evidence on sleep disturbances and menstrual disturbances, including observational studies with different populations and measures. | Provides broader context that the relationship is an active research area and that evidence comes from varied study designs. | A review of associations does not make sleep a validated individual prediction feature or support a particular day-level coefficient. The OR 2.67 above comes from the Kim et al. study summarized in the review, not from a Flora experiment. |
+| **De Souza et al. (2010), exercise and menstrual disturbances** | Compared 67 exercising women with 20 sedentary women using daily reproductive hormone measures across two to three cycles. Half of the observed exercising-group cycles were classified as abnormal, compared with 4.2% of sedentary-group cycles. | Motivates recording intensive exercise as optional context for future analysis. | This was a selected exercise cohort, not a general population sample, and it does not estimate a universal number of cycle days added per intense-exercise day. Flora's +0.6-day-per-day adjustment is a hand-set heuristic. |
+| **Li et al. (2022), cycle prediction and tracking adherence** | Developed a statistical predictive model for next cycle start date using mobile-app data from roughly 186,000 menstruators and over two million tracked cycles, explicitly accounting for missed or delayed tracking. | Informs the general idea that cycle estimates can combine population-level information with personal history, and that gaps in tracking matter. | Flora does not implement Li et al.'s model, use that dataset, or model skipped-cycle adherence in the same way. The symptom coefficients in Flora are not effect estimates from that paper. |
+
+### How the current model works
+
+The active engine is `BayesianPredictionEngine`. It uses up to the **12 most recent logged cycles**, ignores cycle lengths outside 21–45 days, and combines the valid personal history with a fixed prior configured in code: mean **28.1 days** and standard deviation **5.2 days**. These values are implementation defaults—not estimates from Flora users, and not the mean and standard deviation of the Bull et al. study. If no usable history exists, the prior supplies the starting estimate.
+
+The current prototype then applies manually configured adjustments:
+
+| Input | Current implementation rule | Evidence status |
+|---|---|---|
+| Symptoms | Per-symptom coefficient multiplied by reported average severity | Hand-set weights. They are not validated clinical effects; Li et al.'s adherence model does not establish these symptom-to-day values. |
+| Stress | `+0.45` days per high-stress day, capped at `+2.5` days | Inspired by an observed association in Schliep et al.; the numeric day shift and cap are prototype choices. |
+| Sleep | `+0.35` days per hour below 7 hours of average sleep | Motivated by observational sleep/cycle research; the linear conversion is a prototype choice. |
+| Intensive exercise | `+0.6` days per logged intense-exercise day | Contextual feature inspired by research on menstrual disturbances in exercising women; the numeric day shift is a prototype choice. |
+| Egg-white cervical mucus | `−0.8` days | Prototype rule to represent an ovulation-related signal; not a coefficient estimated by the cited studies. |
+| Basal body temperature | A detected shift date can override formula-estimated ovulation; a separate `bbtConfirmedOvulationDate` field is only set when the date is inside the current estimated cycle | Uses a user-entered signal as a date override; it is not independent clinical confirmation. |
+
+After adjustments, cycle length is rounded and clamped to 21–45 days. Ovulation is otherwise estimated as 14 days before the predicted next period, and the fertile window is set from five days before through one day after estimated ovulation. Old period dates are rolled forward to a current cycle; confidence is reduced when history is limited or several cycles had to be estimated. Confidence is a heuristic category, not a calibrated probability.
+
+The calculation is inspectable, but the adjustment weights are **not learned from Flora data** and should not be interpreted as causal effects. Correlational findings do not justify translating a stress score, short sleep, or exercise report into a precise number of cycle days. Calibration, uncertainty evaluation, and an external accuracy study remain future work.
 
 ```mermaid
 flowchart LR
-  A[Recent cycle history] --> D[Bayesian estimate]
-  B[Symptoms] --> E[Explicit adjustments]
+  A[Up to 12 recent cycles] --> D[Bayesian prior + personal history]
+  B[Symptoms] --> E[Prototype adjustments]
   C[Daily logs] --> E
-  D --> F[Cycle date and phase estimates]
+  D --> F[Cycle length estimate]
   E --> F
-  F --> G[Estimate, confidence, and report]
+  F --> G[Period, ovulation and phase dates]
+  G --> H[Estimate, confidence and report]
 ```
 
 ### Why this version does not use machine learning
@@ -68,13 +96,14 @@ For an initial version, a Bayesian baseline is easier to inspect, explain, and c
 
 This repository is an **implementation prototype**, not a clinical study. It does not contain a participant cohort, a collected research dataset, a prospective trial, or a clinical accuracy evaluation. The automated prediction tests check software behavior—such as prior use, history weighting, valid bounds, adjustments, and date handling—not medical correctness or real-world prediction accuracy.
 
-Selected background reading:
+### References
 
-- Bull, J. R. et al. (2019). [Real-world menstrual cycle characteristics of more than 600,000 menstrual cycles](https://doi.org/10.1038/s41746-019-0152-7). *npj Digital Medicine*.
-- Schliep, K. C. et al. (2015). [Perceived stress, reproductive hormones, and ovulatory function: a prospective cohort study](https://doi.org/10.1097/EDE.0000000000000238). *Epidemiology*.
-- Kim, T. H. et al. (2018). [Associations of mental health and sleep duration with menstrual cycle irregularity: a population-based study](https://doi.org/10.1007/s00737-018-0872-8). *Archives of Women's Mental Health*.
-
-These studies inform the topic and design rationale. Their findings should not be read as evidence that Flora's particular adjustment values are proven effects or that Flora's predictions are clinically accurate.
+- Bull, J. R. et al. (2019). [Real-world menstrual cycle characteristics of more than 600,000 menstrual cycles](https://doi.org/10.1038/s41746-019-0152-7). *npj Digital Medicine*, 2, 83.
+- Schliep, K. C. et al. (2015). [Perceived stress, reproductive hormones, and ovulatory function: a prospective cohort study](https://doi.org/10.1097/EDE.0000000000000238). *Epidemiology*, 26(2), 177–184.
+- Kim, T. H. et al. (2018). [Associations of mental health and sleep duration with menstrual cycle irregularity: a population-based study](https://doi.org/10.1007/s00737-018-0872-8). *Archives of Women's Mental Health*, 21(6), 619–626.
+- Jeon, B. & Baek, J. (2023). [Menstrual disturbances and its association with sleep disturbances: a systematic review](https://doi.org/10.1186/s12905-023-02629-0). *BMC Women's Health*, 23, 470.
+- De Souza, M. J. et al. (2010). [High prevalence of subtle and severe menstrual disturbances in exercising women: confirmation using daily hormone measures](https://doi.org/10.1093/humrep/dep411). *Human Reproduction*, 25(2), 491–503.
+- Li, K. et al. (2022). [A predictive model for next cycle start date that accounts for adherence in menstrual self-tracking](https://doi.org/10.1093/jamia/ocab182). *Journal of the American Medical Informatics Association*, 29(1), 3–11.
 
 ## Technology and architecture
 
